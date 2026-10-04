@@ -128,7 +128,7 @@
   <main id="main" class="invitation" inert>
 
     <!-- 2 · HEADER -->
-    <section id="home" class="hero" aria-labelledby="hero-title">
+    <section id="home" class="hero" data-nav="home" aria-labelledby="hero-title">
       <div class="hero__media" aria-hidden="true">
         <picture class="pic">
           <source media="(min-width: 1024px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
@@ -151,7 +151,7 @@
     </section>
 
     <!-- 3 · DATE & VENUE -->
-    <section id="intro" class="intro section" aria-labelledby="intro-title">
+    <section id="intro" class="intro section" data-nav="home" aria-labelledby="intro-title">
       <div class="wrap">
         <div class="atap" aria-hidden="true"><svg><use href="#i-atap"/></svg></div>
         <p class="intro__salam" data-bind="copy.salam" data-reveal>Assalamu’alaikum Warahmatullahi Wabarakatuh</p>
@@ -176,7 +176,7 @@
     </section>
 
     <!-- Verse -->
-    <section id="verse" class="verse section section--linen" aria-label="Kutipan ayat suci">
+    <section id="verse" class="verse section section--linen" data-nav="home" aria-label="Kutipan ayat suci">
       <figure class="wrap verse__fig" data-reveal>
         <span class="verse__mark" aria-hidden="true">“</span>
         <blockquote class="verse__text"><p data-bind="copy.verse.text">Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sungguh, pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir.</p></blockquote>
@@ -438,7 +438,7 @@
     </section>
 
     <!-- 14 · CLOSING -->
-    <section id="closing" class="closing section section--night" aria-labelledby="closing-title">
+    <section id="closing" class="closing section section--night" data-nav="closing" aria-labelledby="closing-title">
       <figure class="closing__figure" data-reveal>
         <picture class="pic">
           <source type="image/avif" srcset="assets/images/cover/closing-lantern-640.avif 640w, assets/images/cover/closing-lantern-960.avif 960w, assets/images/cover/closing-lantern-1440.avif 1440w" sizes="(min-width: 1024px) 520px, 100vw">
