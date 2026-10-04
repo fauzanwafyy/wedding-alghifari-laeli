@@ -114,6 +114,10 @@ The URL stays the same.
 
 ## Local preview & tests (optional)
 
+Extract the project and **double-click `index.html`**. It works straight from the folder
+(fonts are embedded automatically in that case). The RSVP form only works once `rsvp.apiUrl`
+is set. To preview a guest link locally you can also run a tiny server:
+
 ```bash
 python3 -m http.server 8080          # then open http://localhost:8080/?to=Pujo
 ```

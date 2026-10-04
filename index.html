@@ -39,13 +39,18 @@
 
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/responsive.css">
-  <link rel="modulepreload" href="js/config.js">
-  <link rel="modulepreload" href="js/utils.js">
 
   <script>
     // Runs before paint: enables JS styles and locks scroll behind the cover.
     document.documentElement.classList.replace("no-js", "js");
     document.documentElement.classList.add("is-locked");
+    // Opened straight from a folder (file://)? Browsers block font files there, so use embedded fonts.
+    if (location.protocol === "file:") {
+      var fl = document.createElement("link");
+      fl.rel = "stylesheet";
+      fl.href = "css/fonts-local.css";
+      document.head.appendChild(fl);
+    }
   </script>
 </head>
 <body>
@@ -503,7 +508,19 @@ Bapak Misbah Hidayat &amp; Ibu Iin Suryani</p>
     <p class="noscript">Untuk pengalaman terbaik, aktifkan JavaScript pada browser Anda.</p>
   </noscript>
 
-  <script type="module" src="js/main.js"></script>
+  <!-- Scripts run in order after the page is parsed. Edit content in js/config.js only. -->
+  <script defer src="js/config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/guest.js"></script>
+  <script defer src="js/countdown.js"></script>
+  <script defer src="js/calendar.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/wishes.js"></script>
+  <script defer src="js/rsvp.js"></script>
+  <script defer src="js/gallery.js"></script>
+  <script defer src="js/gift.js"></script>
+  <script defer src="js/music.js"></script>
+  <script defer src="js/main.js"></script>
   <script>
     // Safety net: if the main script is slow or fails, the button still opens the invitation.
     document.getElementById("open-invitation").addEventListener("click", function () {
@@ -512,10 +529,6 @@ Bapak Misbah Hidayat &amp; Ibu Iin Suryani</p>
       document.getElementById("cover").hidden = true;
       document.getElementById("main").removeAttribute("inert");
     });
-  </script>
-  <script nomodule>
-    document.documentElement.classList.remove("is-locked");
-    document.getElementById("cover").className += " is-ready";
   </script>
 </body>
 </html>

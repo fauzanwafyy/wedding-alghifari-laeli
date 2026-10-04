@@ -68,9 +68,12 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script type="module">
-    import { WEDDING_CONFIG as C } from "./js/config.js";
-    import { h, toast, cleanText, formatLongDate } from "./js/utils.js";
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+  (function () {
+    const C = window.WEDDING_CONFIG;
+    const { h, toast, cleanText, formatLongDate } = window.AWL;
 
     const $ = (s) => document.querySelector(s);
     const KEY = "awl:generator";
@@ -146,6 +149,7 @@
       document.body.append(a); a.click(); a.remove();
     });
     render();
+  })();
   </script>
 </body>
 </html>

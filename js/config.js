@@ -17,7 +17,7 @@
  * ============================================================================
  */
 
-export const WEDDING_CONFIG = {
+const WEDDING_CONFIG = {
   /* --------------------------------------------------------------------- *
    *  SITE
    * --------------------------------------------------------------------- */
@@ -317,7 +317,11 @@ export const WEDDING_CONFIG = {
  *  "Keluarga", a real name, or "" for none. Use generator.html to create links.
  *  NOTE: this file is public, so only add what you're happy to be visible.
  * ========================================================================== */
-export const GUESTS = {
+const GUESTS = {
   "fauzan-wafi": { name: "Fauzan Wafi", partner: "Partner" },
   "ade-fitriyani": { name: "Ade Fitriyani", partner: "" },
 };
+
+// Make the configuration available to the other scripts.
+window.WEDDING_CONFIG = WEDDING_CONFIG;
+window.GUESTS = GUESTS;
