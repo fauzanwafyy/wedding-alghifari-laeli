@@ -88,6 +88,12 @@ export function initRsvp(guest) {
     els.returning.textContent = `Anda sudah mengirim konfirmasi sebagai “${cleanText(previous.name, 80)}”. Kirim lagi hanya jika ingin memperbarui.`;
   }
 
+  if (cfg.closed) {
+    showStatus("info", WEDDING_CONFIG.copy.rsvpClosed);
+    els.fieldset.disabled = true;
+    els.submit.disabled = true;
+    return;
+  }
   if (!isApiConfigured()) {
     showStatus("info", MESSAGES.config);
     els.submit.disabled = true;

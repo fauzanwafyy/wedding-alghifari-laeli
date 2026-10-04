@@ -236,6 +236,7 @@ export const WEDDING_CONFIG = {
    * --------------------------------------------------------------------- */
   rsvp: {
     apiUrl: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+    closed: false,                // true = stop accepting RSVPs (wishes stay visible)
     maxGuests: 5,                 // max people per RSVP (including the guest)
     nameMaxLength: 80,
     messageMaxLength: 500,
@@ -288,6 +289,7 @@ export const WEDDING_CONFIG = {
     rsvpIntro:
       "Kehadiran dan doa restu Anda adalah hadiah terindah bagi kami. Mohon konfirmasi kehadiran melalui formulir berikut.",
     rsvpDeadline: "",            // e.g. "Mohon konfirmasi sebelum 14 Oktober 2026." Empty = hidden.
+    rsvpClosed: "Konfirmasi kehadiran telah ditutup. Terima kasih atas doa dan perhatiannya.",
 
     wishesIntro: "Untaian doa dan ucapan dari keluarga, sahabat, dan orang-orang terkasih.",
 
