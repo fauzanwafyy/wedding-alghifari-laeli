@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Halaman tidak ditemukan | Alghifari &amp; Laeli</title>
+  <meta name="theme-color" content="#17130F">
+  <script>
+    // Pretty guest links: /<repo>/fauzan-wafi  →  /<repo>/?to=fauzan-wafi
+    // GitHub Pages serves this file for unknown paths, so we can redirect
+    // without any server. Only one path segment after the site root is accepted.
+    (function () {
+      var parts = location.pathname.split("/").filter(Boolean);
+      var onProjectSite = /\.github\.io$/i.test(location.hostname);
+      var root = onProjectSite && parts.length ? "/" + parts[0] + "/" : "/";
+      var rest = onProjectSite ? parts.slice(1) : parts;
+      if (rest.length === 1 && /^[a-z0-9][a-z0-9-]{1,79}$/i.test(rest[0]) && !/\./.test(rest[0])) {
+        location.replace(root + "?to=" + encodeURIComponent(rest[0].toLowerCase()) + location.hash);
+        return;
+      }
+      document.documentElement.setAttribute("data-root", root);
+    })();
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 2rem 1.5rem;
+      background: #17130f; color: #f2e8d8; text-align: center;
+      font: 400 1rem/1.7 "Jost", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    }
+    svg { width: 48px; height: 20px; margin: 0 auto 1.75rem; fill: none; stroke: #d8bc8a; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+    p.e { font-size: .6875rem; letter-spacing: .34em; text-transform: uppercase; color: #d8bc8a; margin-bottom: 1rem; }
+    h1 { font: 300 clamp(2.4rem, 10vw, 3.4rem)/1.05 "Fraunces", "Iowan Old Style", Georgia, serif; letter-spacing: -.02em; margin-bottom: 1.25rem; }
+    h1 em { color: #d8bc8a; }
+    p.t { max-width: 26rem; margin: 0 auto 2.25rem; color: #bfaf98; }
+    a {
+      display: inline-flex; align-items: center; min-height: 52px; padding: 0 1.75rem;
+      border: 1px solid rgba(216, 188, 138, .6); color: #d8bc8a; text-decoration: none;
+      font-size: .75rem; letter-spacing: .24em; text-transform: uppercase;
+    }
+    a:hover, a:focus-visible { background: #d8bc8a; color: #17130f; outline: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <svg viewBox="0 0 48 20" aria-hidden="true"><path d="M2 18.5h44M6 18.5l10-6h16l10 6M17.5 12.5 21 4.5h6l3.5 8M24 4.5V1.5"/></svg>
+    <p class="e">The Wedding of Alghifari &amp; Laeli</p>
+    <h1>Halaman tidak <em>ditemukan</em></h1>
+    <p class="t">Tautan yang Anda buka mungkin keliru atau sudah berubah. Silakan kembali ke undangan.</p>
+    <a id="home" href="/">Buka Undangan</a>
+  </main>
+  <script>
+    document.getElementById("home").href = document.documentElement.getAttribute("data-root") || "/";
+  </script>
+</body>
+</html>

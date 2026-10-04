@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Guest Link Generator | Alghifari &amp; Laeli</title>
+  <meta name="theme-color" content="#17130F">
+  <link rel="icon" href="assets/images/meta/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    body { background: var(--c-ivory) var(--paper); }
+    .gen { max-width: 46rem; margin: 0 auto; padding: calc(3rem + var(--safe-t)) var(--gutter) 5rem; }
+    .gen h1 { margin-bottom: 1rem; }
+    .gen > header { text-align: center; margin-bottom: 3rem; }
+    .gen > header p.lead { color: var(--c-ink-soft); max-width: 32rem; margin: 0 auto; }
+    .gen section { margin-bottom: 2.5rem; }
+    .gen label { display: block; margin-bottom: .6rem; }
+    .gen textarea.field__input { min-height: 9rem; font-family: var(--f-sans); }
+    #template { min-height: 18rem; font-size: .9375rem; }
+    .row { display: grid; gap: 1rem; }
+    .results { border-top: 1px solid var(--c-hair-strong); }
+    .result { display: grid; gap: .6rem; padding: 1.1rem 0; border-bottom: 1px solid var(--c-hair-strong); }
+    .result__name { font-family: var(--f-display); font-size: 1.25rem; line-height: 1.3; }
+    .result__url { font-size: .8125rem; color: var(--c-ink-soft); overflow-wrap: anywhere; }
+    .result__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .result__actions .btn { min-height: 44px; padding: 0 1rem; font-size: .6875rem; }
+    .hint { font-size: .8125rem; color: var(--c-ink-soft); margin-top: .5rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <main class="gen">
+    <header>
+      <p class="eyebrow">Untuk mempelai · tidak untuk dibagikan</p>
+      <h1 class="title">Guest <em>Links</em></h1>
+      <p class="lead">Tulis satu nama tamu per baris. Setiap nama mendapat tautan undangan pribadi dan pesan WhatsApp siap kirim.</p>
+    </header>
+
+    <section class="row">
+      <div class="field">
+        <label class="field__label" for="base">Alamat undangan</label>
+        <input class="field__input" id="base" type="url" inputmode="url" autocomplete="off">
+        <p class="hint">Terisi otomatis. Ubah jika memakai domain sendiri.</p>
+      </div>
+      <div class="field">
+        <label class="field__label" for="names">Nama tamu (satu per baris)</label>
+        <textarea class="field__input" id="names" placeholder="Pujo &amp; Partner&#10;Bapak Ahmad Fauzi &amp; Keluarga&#10;Ade Fitriyani"></textarea>
+      </div>
+    </section>
+
+    <section>
+      <div class="field">
+        <label class="field__label" for="template">Template pesan WhatsApp</label>
+        <textarea class="field__input" id="template"></textarea>
+        <p class="hint"><code>{nama}</code> diganti nama tamu, <code>{link}</code> diganti tautan undangan.</p>
+      </div>
+    </section>
+
+    <section>
+      <p class="eyebrow" id="count">0 tautan</p>
+      <div class="toolbar">
+        <button class="btn btn--small" id="copy-all" type="button">Salin semua tautan</button>
+        <button class="btn btn--small" id="download" type="button">Unduh CSV</button>
+      </div>
+      <ul class="results" id="results" aria-live="polite"></ul>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import { WEDDING_CONFIG as C } from "./js/config.js";
+    import { h, toast, cleanText, formatLongDate } from "./js/utils.js";
+
+    const $ = (s) => document.querySelector(s);
+    const KEY = "awl:generator";
+    const defaultBase = C.site.url || location.href.replace(/generator\.html.*$/, "");
+    const defaultTemplate = [
+      "Assalamu’alaikum Warahmatullahi Wabarakatuh",
+      "",
+      "Kepada Yth.",
+      "Bapak/Ibu/Saudara/i",
+      "*{nama}*",
+      "",
+      "Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami:",
+      "",
+      `*${C.couple.groom.nickname} & ${C.couple.bride.nickname}*`,
+      formatLongDate(C.wedding.date, C.site.locale),
+      `${C.venue.name}, ${C.venue.shortAddress}`,
+      "",
+      "Informasi lengkap dan konfirmasi kehadiran:",
+      "{link}",
+      "",
+      "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.",
+      "",
+      "Wassalamu’alaikum Warahmatullahi Wabarakatuh",
+      "",
+      "Kami yang berbahagia,",
+      `${C.couple.groom.nickname} & ${C.couple.bride.nickname}`,
+    ].join("\n");
+
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { saved = {}; }
+    $("#base").value = saved.base || defaultBase;
+    $("#names").value = saved.names || "";
+    $("#template").value = saved.template || defaultTemplate;
+
+    const linkFor = (base, name) => {
+      const u = new URL(base);
+      u.searchParams.set("to", name);
+      return u.toString();
+    };
+
+    async function copy(text, msg) {
+      try { await navigator.clipboard.writeText(text); toast(msg); }
+      catch { prompt("Salin manual:", text); }
+    }
+
+    let current = [];
+    function render() {
+      const base = $("#base").value.trim();
+      const names = [...new Set($("#names").value.split("\n").map((n) => cleanText(n, 60)).filter(Boolean))];
+      try { localStorage.setItem(KEY, JSON.stringify({ base, names: $("#names").value, template: $("#template").value })); } catch {}
+      let valid = true;
+      try { new URL(base); } catch { valid = false; }
+      current = valid ? names.map((name) => ({ name, url: linkFor(base, name) })) : [];
+      $("#count").textContent = valid ? `${current.length} tautan` : "Alamat undangan tidak valid";
+      $("#results").replaceChildren(...current.map(({ name, url }) => {
+        const message = $("#template").value.replaceAll("{nama}", name).replaceAll("{link}", url);
+        return h("li", { class: "result" },
+          h("p", { class: "result__name", text: name }),
+          h("p", { class: "result__url", text: url }),
+          h("div", { class: "result__actions" },
+            h("button", { class: "btn", type: "button", text: "Salin tautan", onclick: () => copy(url, "Tautan disalin") }),
+            h("button", { class: "btn", type: "button", text: "Salin pesan", onclick: () => copy(message, "Pesan disalin") }),
+            h("a", { class: "btn btn--solid", href: `https://wa.me/?text=${encodeURIComponent(message)}`, target: "_blank", rel: "noopener noreferrer", text: "Kirim WhatsApp" }),
+            h("a", { class: "btn", href: url, target: "_blank", rel: "noopener noreferrer", text: "Pratinjau" })));
+      }));
+    }
+
+    ["base", "names", "template"].forEach((id) => $("#" + id).addEventListener("input", render));
+    $("#copy-all").addEventListener("click", () => copy(current.map((r) => `${r.name}\t${r.url}`).join("\n"), "Semua tautan disalin"));
+    $("#download").addEventListener("click", () => {
+      const csv = "Nama,Tautan\n" + current.map((r) => `"${r.name.replace(/"/g, '""')}","${r.url}"`).join("\n");
+      const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })), download: "tautan-undangan.csv" });
+      document.body.append(a); a.click(); a.remove();
+    });
+    render();
+  </script>
+</body>
+</html>
