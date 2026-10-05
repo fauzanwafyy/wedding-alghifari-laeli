@@ -9,7 +9,7 @@
   const { $, $$, h, picture, dateParts, formatLongDate, formatTime, prefersReducedMotion } = AWL;
   const { resolveGuest } = AWL;
   const { initCountdown } = AWL;
-  const { buildGoogleCalendarUrl } = AWL;
+  const { buildGoogleCalendarUrl, buildEventCalendarUrl } = AWL;
   const { initGallery } = AWL;
   const { initRsvp } = AWL;
   const { initWishes } = AWL;
@@ -101,23 +101,39 @@
     const list = $("#event-list");
     if (!list) return;
     const tz = C.wedding.timezoneLabel;
+    const icon = (id) => {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("class", "icon");
+      const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+      use.setAttribute("href", `#${id}`);
+      svg.append(use);
+      return svg;
+    };
     C.events.forEach((ev, i) => {
-      const end = ev.endTime ? `– ${formatTime(ev.endTime)} ${tz}` : ev.endText ? `– ${ev.endText}` : "";
+      const sameVenue = ev.venue === C.venue.name;
+      const area = ev.shortAddress || (sameVenue ? C.venue.shortAddress : ev.address);
+      const endText = ev.endTime ? `– ${formatTime(ev.endTime)} ${tz}` : ev.endText ? `– ${ev.endText}` : "";
+      const mark = icon("i-atap");
+      mark.setAttribute("class", "event-card__mark");
       list.append(
-        h("li", { class: "program__item", "data-reveal": "" },
-          h("span", { class: "program__no", "aria-hidden": "true", text: String(i + 1).padStart(2, "0") }),
-          h("div", { class: "program__body" },
-            h("h3", { class: "program__title", text: ev.title }),
-            h("p", { class: "program__date", text: formatLongDate(ev.date, C.site.locale) }),
-            h("p", { class: "program__time" },
-              h("span", { class: "program__clock", text: formatTime(ev.startTime) }),
-              h("span", { class: "program__tz", text: ` ${tz}` }),
-              end ? h("span", { class: "program__end", text: ` ${end}` }) : null),
-            ev.note ? h("p", { class: "program__note", text: ev.note }) : null,
-            // Only show a per-event venue when events take place at different venues
-            new Set(C.events.map((e) => e.venue)).size > 1
-              ? h("a", { class: "link-arrow", href: ev.mapsUrl, target: "_blank", rel: "noopener noreferrer", text: ev.venue })
-              : null))
+        h("li", { class: `event-card${i % 2 ? " event-card--alt" : ""}`, "data-reveal": "" },
+          mark,
+          h("h3", { class: "event-card__title", text: ev.title }),
+          h("p", { class: "event-card__date", text: formatLongDate(ev.date, C.site.locale) }),
+          h("p", { class: "event-card__time" },
+            h("span", { class: "event-card__clock", text: formatTime(ev.startTime) }),
+            h("span", { class: "event-card__tz", text: tz }),
+            endText ? h("span", { class: "event-card__end", text: endText }) : null),
+          ev.note ? h("p", { class: "event-card__note", text: ev.note }) : null,
+          h("span", { class: "event-card__rule", "aria-hidden": "true" }),
+          h("p", { class: "event-card__venue", text: ev.venue }),
+          area ? h("p", { class: "event-card__area", text: area }) : null,
+          h("div", { class: "event-card__actions" },
+            h("a", { class: "btn btn--small", href: ev.mapsUrl || C.venue.mapsUrl, target: "_blank", rel: "noopener noreferrer",
+              "aria-label": `Lihat lokasi ${ev.title} di Google Maps` }, icon("i-pin"), h("span", { text: "Lihat Lokasi" })),
+            h("a", { class: "link-arrow event-card__cal", href: buildEventCalendarUrl(C, ev, siteUrl), target: "_blank", rel: "noopener noreferrer",
+              "aria-label": `Simpan ${ev.title} ke Google Calendar` }, icon("i-calendar"), h("span", { text: "Simpan ke Kalender" }))))
       );
     });
   }
@@ -129,17 +145,32 @@
       list.append(
         h("li", { class: `chapter${i % 2 ? " chapter--alt" : ""}` },
           ch.image
-            ? h("figure", { class: "chapter__figure", "data-reveal": "" },
-                picture(ch.image, { sizes: "(min-width: 1024px) 400px, (min-width: 768px) 50vw, 78vw" }))
+            ? h("figure", { class: "chapter__figure", "data-reveal": "image" },
+                picture(ch.image, { sizes: "(min-width: 1024px) 340px, (min-width: 768px) 40vw, 70vw" }))
             : null,
           h("div", { class: "chapter__body", "data-reveal": "" },
-            h("p", { class: "chapter__kicker" },
-              h("span", { class: "chapter__no", text: ch.number }),
-              h("span", { class: "chapter__sub", text: ch.subtitle })),
+            h("p", { class: "chapter__kicker", "aria-hidden": "true" },
+              h("span", { class: "chapter__no", text: ch.number })),
             h("h3", { class: "chapter__title", text: ch.title }),
             h("div", { class: "chapter__text" }, ...ch.paragraphs.map((t) => h("p", { text: t })))))
       );
     });
+  }
+
+  /** Cover, header, desktop side photo and closing photo, all from C.images. */
+  function renderPageImages() {
+    const { cover, hero, closing } = C.images;
+    const put = (sel, node) => {
+      const slot = $(sel);
+      if (slot && node) slot.replaceChildren(node);
+    };
+    put("[data-slot='cover']", picture(cover, { sizes: "100vw", loading: "eager", priority: true, fade: false, alt: false, onlyBelow: 1024 }));
+    put("[data-slot='hero']", picture(hero, { sizes: "100vw", loading: "eager", fade: false, alt: false, onlyBelow: 1024 }));
+    put("[data-slot='stage-cover']", picture(cover, { sizes: "66vw", loading: "eager", priority: true, fade: false, alt: false,
+      onlyAbove: 1024, position: cover.positionDesktop, className: "stage__pic stage__pic--cover" }));
+    put("[data-slot='stage-hero']", picture(hero, { sizes: "66vw", loading: "eager", fade: false, alt: false,
+      onlyAbove: 1024, position: hero.positionDesktop, className: "stage__pic stage__pic--hero" }));
+    put("[data-slot='closing']", picture(closing, { sizes: "(min-width: 1024px) 520px, 100vw" }));
   }
 
   function renderVerse() {
@@ -149,6 +180,11 @@
 
   /* --------------------------------------------------------------- motion -- */
   function initReveal() {
+    // Children of [data-stagger] appear one after another (small delays only).
+    $$("[data-stagger]").forEach((group) => {
+      const step = Number(group.dataset.stagger) || 110;
+      [...group.querySelectorAll("[data-reveal]")].forEach((el, i) => el.style.setProperty("--reveal-delay", `${Math.min(i, 6) * step}ms`));
+    });
     const items = $$("[data-reveal]");
     if (!("IntersectionObserver" in window) || prefersReducedMotion()) {
       items.forEach((el) => el.classList.add("is-visible"));
@@ -163,7 +199,7 @@
           }
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.12 }
     );
     items.forEach((el) => io.observe(el));
   }
@@ -200,6 +236,18 @@
     document.addEventListener("focusout", () => html.classList.remove("is-typing"));
   }
 
+  /**
+   * Desktop photo panel: its caption repeats the hero title, so it only appears
+   * once the hero (with the same names) has scrolled out of view.
+   */
+  function initStageCaption() {
+    const hero = $("#home");
+    if (!hero || !("IntersectionObserver" in window)) return html.classList.add("is-past-hero");
+    new IntersectionObserver(([e]) => html.classList.toggle("is-past-hero", e.intersectionRatio < 0.3), {
+      threshold: [0, 0.3, 0.6, 1],
+    }).observe(hero);
+  }
+
   function initParallax() {
     if (prefersReducedMotion()) return;
     const media = $(".hero__media");
@@ -208,7 +256,7 @@
     const update = () => {
       ticking = false;
       const y = window.scrollY;
-      if (y < window.innerHeight * 1.2) media.style.transform = `translate3d(0, ${(y * 0.18).toFixed(1)}px, 0)`;
+      if (y < window.innerHeight * 1.2) media.style.transform = `translate3d(0, ${(y * 0.1).toFixed(1)}px, 0)`;
     };
     window.addEventListener("scroll", () => {
       if (!ticking) {
@@ -278,11 +326,12 @@
     const cal = $("#calendar-link");
     if (cal) cal.href = buildGoogleCalendarUrl(C, siteUrl);
 
+    renderPageImages();
     renderVerse();
     renderCouple();
     renderEvents();
     renderStory();
-    initGallery(C.gallery);
+    initGallery(C.gallery, C.galleryBackdrop);
     initGift(C.gift);
     initCountdown($("#countdown"), C.wedding, C.copy);
     initWishes();
@@ -292,6 +341,7 @@
     initCover(music);
     initReveal();
     initDock();
+    initStageCaption();
     initParallax();
 
     window.__awlReady = true;

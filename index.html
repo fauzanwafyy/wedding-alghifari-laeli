@@ -20,7 +20,7 @@
   <meta property="og:image" content="https://SITE_URL/assets/images/meta/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Alghifari dan Laeli di depan rumah joglo, undangan pernikahan 21 Oktober 2026">
+  <meta property="og:image:alt" content="Alghifari dan Laeli membawa lentera di tengah hutan pada malam hari, undangan pernikahan 21 Oktober 2026">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Wedding of Alghifari &amp; Laeli">
   <meta name="twitter:description" content="Rabu, 21 Oktober 2026 · SGB Learning Center, Cisarua, Bogor.">
@@ -30,26 +30,46 @@
   <link rel="icon" href="assets/images/meta/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="assets/images/meta/apple-touch-icon.png">
 
-  <!-- Critical assets: fonts + the opening photograph -->
-  <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/jost-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" as="image" type="image/avif" fetchpriority="high"
-        imagesrcset="assets/images/cover/cover-night-640.avif 640w, assets/images/cover/cover-night-960.avif 960w, assets/images/cover/cover-night-1440.avif 1440w"
-        imagesizes="(min-width: 1024px) 66vw, 100vw">
-
+  <!-- Critical assets (fonts + the opening photograph) are preloaded by the inline script below -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/responsive.css">
+
+  <!-- All content and photos come from js/config.js (loaded first so the cover photo can start downloading early) -->
+  <script src="js/config.js"></script>
 
   <script>
     // Runs before paint: enables JS styles and locks scroll behind the cover.
     document.documentElement.classList.replace("no-js", "js");
     document.documentElement.classList.add("is-locked");
-    // Opened straight from a folder (file://)? Browsers block font files there, so use embedded fonts.
+    // Start downloading the cover photo configured in js/config.js right away.
+    (function (img) {
+      if (!img) return;
+      var l = document.createElement("link");
+      l.rel = "preload";
+      l.as = "image";
+      l.type = "image/avif";
+      l.setAttribute("fetchpriority", "high");
+      l.setAttribute("imagesrcset", img.widths.map(function (w) { return img.src + "-" + w + ".avif " + Math.min(w, img.w) + "w"; }).join(", "));
+      l.setAttribute("imagesizes", "(min-width: 1024px) 66vw, 100vw");
+      document.head.appendChild(l);
+    })(window.WEDDING_CONFIG && window.WEDDING_CONFIG.images && window.WEDDING_CONFIG.images.cover);
+    // Fonts: preload over http(s). Opened straight from a folder (file://)? Browsers
+    // block font files there, so use the embedded copies instead (no console errors).
     if (location.protocol === "file:") {
       var fl = document.createElement("link");
       fl.rel = "stylesheet";
       fl.href = "css/fonts-local.css";
       document.head.appendChild(fl);
+    } else {
+      ["fraunces-latin", "jost-latin"].forEach(function (f) {
+        var p = document.createElement("link");
+        p.rel = "preload";
+        p.as = "font";
+        p.type = "font/woff2";
+        p.crossOrigin = "anonymous";
+        p.href = "assets/fonts/" + f + ".woff2";
+        document.head.appendChild(p);
+      });
     }
   </script>
 </head>
@@ -75,15 +95,7 @@
 
   <!-- ===================================================== OPENING COVER -->
   <div class="cover" id="cover" role="dialog" aria-modal="true" aria-labelledby="cover-title" aria-describedby="cover-guest">
-    <div class="cover__media" aria-hidden="true">
-      <picture class="pic">
-        <!-- On desktop the stage shows this photo instead, so skip the download here -->
-        <source media="(min-width: 1024px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
-        <source type="image/avif" srcset="assets/images/cover/cover-night-640.avif 640w, assets/images/cover/cover-night-960.avif 960w, assets/images/cover/cover-night-1440.avif 1440w" sizes="100vw">
-        <source type="image/webp" srcset="assets/images/cover/cover-night-640.webp 640w, assets/images/cover/cover-night-960.webp 960w, assets/images/cover/cover-night-1440.webp 1440w" sizes="100vw">
-        <img src="assets/images/cover/cover-night-960.webp" alt="" width="2400" height="3600" fetchpriority="high" decoding="async">
-      </picture>
-    </div>
+    <div class="cover__media" aria-hidden="true" data-slot="cover"></div>
     <div class="cover__shade" aria-hidden="true"></div>
 
     <div class="cover__content">
@@ -111,21 +123,13 @@
 
   <!-- ===================================== DESKTOP STAGE (decorative) -->
   <div class="stage" aria-hidden="true">
-    <picture class="stage__pic stage__pic--night">
-      <source type="image/avif" srcset="assets/images/cover/cover-night-960.avif 960w, assets/images/cover/cover-night-1440.avif 1440w" sizes="66vw" media="(min-width: 1024px)">
-      <source type="image/webp" srcset="assets/images/cover/cover-night-960.webp 960w, assets/images/cover/cover-night-1440.webp 1440w" sizes="66vw" media="(min-width: 1024px)">
-      <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" width="2400" height="3600" decoding="async">
-    </picture>
-    <picture class="stage__pic stage__pic--day">
-      <source type="image/avif" srcset="assets/images/cover/cover-day-960.avif 960w, assets/images/cover/cover-day-1440.avif 1440w" sizes="66vw" media="(min-width: 1024px)">
-      <source type="image/webp" srcset="assets/images/cover/cover-day-960.webp 960w, assets/images/cover/cover-day-1440.webp 1440w" sizes="66vw" media="(min-width: 1024px)">
-      <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" width="2400" height="3600" loading="lazy" decoding="async">
-    </picture>
+    <div class="stage__slot" data-slot="stage-cover"></div>
+    <div class="stage__slot stage__slot--hero" data-slot="stage-hero"></div>
     <div class="stage__shade"></div>
     <div class="stage__caption">
       <p class="eyebrow eyebrow--night">The Wedding of</p>
       <p class="stage__names"><span data-bind="groom.nick">Alghifari</span> <span class="amp">&amp;</span> <span data-bind="bride.nick">Laeli</span></p>
-      <p class="stage__date" data-bind="date.long">Rabu, 21 Oktober 2026</p>
+      <p class="stage__date" data-bind="date.dots">21 · 10 · 2026</p>
     </div>
   </div>
 
@@ -134,23 +138,16 @@
 
     <!-- 2 · HEADER -->
     <section id="home" class="hero" data-nav="home" aria-labelledby="hero-title">
-      <div class="hero__media" aria-hidden="true">
-        <picture class="pic">
-          <source media="(min-width: 1024px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
-          <source type="image/avif" srcset="assets/images/cover/cover-day-640.avif 640w, assets/images/cover/cover-day-960.avif 960w, assets/images/cover/cover-day-1440.avif 1440w" sizes="100vw">
-          <source type="image/webp" srcset="assets/images/cover/cover-day-640.webp 640w, assets/images/cover/cover-day-960.webp 960w, assets/images/cover/cover-day-1440.webp 1440w" sizes="100vw">
-          <img src="assets/images/cover/cover-day-960.webp" alt="" width="2400" height="3600" decoding="async">
-        </picture>
-      </div>
+      <div class="hero__media" aria-hidden="true" data-slot="hero"></div>
       <div class="hero__content">
         <svg class="hero__mark" aria-hidden="true"><use href="#i-atap"/></svg>
-        <p class="eyebrow">Wedding of</p>
+        <p class="eyebrow">The Wedding of</p>
         <h1 class="hero__names" id="hero-title" tabindex="-1">
           <span class="hero__line" data-bind="groom.nick">Alghifari</span>
           <span class="hero__line hero__line--amp"><span class="amp" aria-hidden="true">&amp;</span><span class="visually-hidden">dan</span></span>
           <span class="hero__line" data-bind="bride.nick">Laeli</span>
         </h1>
-        <p class="hero__date" data-bind="date.en">21 October 2026</p>
+        <p class="hero__date" data-bind="date.dots">21 · 10 · 2026</p>
       </div>
       <a class="scroll-cue" href="#intro"><span class="visually-hidden">Gulir ke bawah</span></a>
     </section>
@@ -193,19 +190,18 @@
     <section id="couple" class="couple section" data-nav="couple" aria-labelledby="couple-title">
       <div class="wrap">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Kedua Mempelai</p>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="couple-title">The <em>Couple</em></h2>
           <p class="sec-lead" data-bind="copy.coupleIntro">Maha Suci Allah yang telah menciptakan makhluk-Nya berpasang-pasangan. Atas rahmat dan ridho-Nya, kami dipersatukan dalam ikatan pernikahan.</p>
         </header>
       </div>
 
       <article class="person person--groom" id="groom" aria-labelledby="groom-name">
-        <figure class="person__figure" data-reveal>
+        <figure class="person__figure" data-reveal="image">
           <div class="frame"><div class="frame__img" data-image="groom"></div></div>
-          <figcaption class="person__tag"><span>No. 01</span><span>The Groom</span></figcaption>
+          <figcaption class="person__tag">The Groom</figcaption>
         </figure>
         <div class="person__body" data-reveal>
-          <p class="eyebrow">Mempelai Pria</p>
           <h3 class="person__name" id="groom-name" data-bind="groom.name">Moh Agil Alghifari</h3>
           <p class="person__parents">
             <span class="person__childof" data-bind="groom.childOf">Putra dari</span>
@@ -218,12 +214,11 @@
       <div class="couple__amp" aria-hidden="true"><span>&amp;</span></div>
 
       <article class="person person--bride" id="bride" aria-labelledby="bride-name">
-        <figure class="person__figure" data-reveal>
+        <figure class="person__figure" data-reveal="image">
           <div class="frame"><div class="frame__img" data-image="bride"></div></div>
-          <figcaption class="person__tag"><span>No. 02</span><span>The Bride</span></figcaption>
+          <figcaption class="person__tag">The Bride</figcaption>
         </figure>
         <div class="person__body" data-reveal>
-          <p class="eyebrow">Mempelai Wanita</p>
           <h3 class="person__name" id="bride-name" data-bind="bride.name">Laeli Luspitasari</h3>
           <p class="person__parents">
             <span class="person__childof" data-bind="bride.childOf">Putri dari</span>
@@ -235,19 +230,19 @@
     </section>
 
     <!-- 6–7 · COUNTDOWN + SAVE THE DATE -->
-    <section id="countdown" class="countdown section section--night" data-nav="events" aria-labelledby="countdown-title">
+    <section id="countdown" class="countdown section section--champagne" data-nav="events" aria-labelledby="countdown-title">
       <div class="countdown__glow" aria-hidden="true"></div>
       <div class="wrap">
-        <header class="sec-head sec-head--night" data-reveal>
-          <p class="eyebrow eyebrow--night">Menghitung Hari</p>
+        <header class="sec-head" data-reveal>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="countdown-title">Counting the <em>Days</em></h2>
         </header>
 
-        <div class="timer" role="timer" aria-label="Hitung mundur menuju hari pernikahan" data-reveal>
-          <div class="timer__unit"><span class="timer__num" data-unit="days">00</span><span class="timer__label" data-unit-label="days">Hari</span></div>
-          <div class="timer__unit"><span class="timer__num" data-unit="hours">00</span><span class="timer__label" data-unit-label="hours">Jam</span></div>
-          <div class="timer__unit"><span class="timer__num" data-unit="minutes">00</span><span class="timer__label" data-unit-label="minutes">Menit</span></div>
-          <div class="timer__unit"><span class="timer__num" data-unit="seconds">00</span><span class="timer__label" data-unit-label="seconds">Detik</span></div>
+        <div class="timer" role="timer" aria-label="Hitung mundur menuju hari pernikahan" data-stagger="120">
+          <div class="timer__unit" data-reveal><span class="timer__num" data-unit="days">00</span><span class="timer__label" data-unit-label="days">Hari</span></div>
+          <div class="timer__unit" data-reveal><span class="timer__num" data-unit="hours">00</span><span class="timer__label" data-unit-label="hours">Jam</span></div>
+          <div class="timer__unit" data-reveal><span class="timer__num" data-unit="minutes">00</span><span class="timer__label" data-unit-label="minutes">Menit</span></div>
+          <div class="timer__unit" data-reveal><span class="timer__num" data-unit="seconds">00</span><span class="timer__label" data-unit-label="seconds">Detik</span></div>
         </div>
         <div class="timer-done" hidden>
           <p class="timer-done__title">Today is the day.</p>
@@ -255,11 +250,11 @@
         </div>
 
         <div class="savedate" id="save-the-date" data-reveal>
-          <div class="atap atap--night" aria-hidden="true"><svg><use href="#i-atap"/></svg></div>
+          <div class="atap" aria-hidden="true"><svg><use href="#i-atap"/></svg></div>
           <h3 class="savedate__title">Save the <em>Date</em></h3>
           <p class="savedate__when" data-bind="date.firstTime">Rabu, 21 Oktober 2026 · 08.30 WIB</p>
           <p class="savedate__where" data-bind="venue.name">SGB Learning Center</p>
-          <a class="btn btn--lantern" id="calendar-link" href="https://calendar.google.com/calendar/" target="_blank" rel="noopener noreferrer">
+          <a class="btn btn--solid" id="calendar-link" href="https://calendar.google.com/calendar/" target="_blank" rel="noopener noreferrer">
             <svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>
             <span>Simpan ke Google Calendar</span>
           </a>
@@ -271,21 +266,10 @@
     <section id="events" class="events section" data-nav="events" aria-labelledby="events-title">
       <div class="wrap">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Rangkaian Acara</p>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="events-title">Event <em>Details</em></h2>
         </header>
-        <ol class="program" id="event-list"></ol>
-
-        <div class="venue-card" data-reveal>
-          <svg class="venue-card__icon" aria-hidden="true"><use href="#i-pin"/></svg>
-          <p class="eyebrow">Lokasi Acara</p>
-          <h3 class="venue-card__name"><a data-href="maps" href="https://maps.app.goo.gl/hkwfC3oZhdUQjaJB6" target="_blank" rel="noopener noreferrer" data-bind="venue.name">SGB Learning Center</a></h3>
-          <p class="venue-card__addr" data-bind="venue.address">Jl. Desa Cilember, Megamendung, Cilember, Kec. Cisarua, Kabupaten Bogor, Jawa Barat 16750</p>
-          <a class="btn" data-href="maps" href="https://maps.app.goo.gl/hkwfC3oZhdUQjaJB6" target="_blank" rel="noopener noreferrer">
-            <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
-            <span>Buka Google Maps</span>
-          </a>
-        </div>
+        <ol class="events__list" id="event-list" data-stagger="180"></ol>
       </div>
     </section>
 
@@ -293,7 +277,7 @@
     <section id="story" class="story section" data-nav="story" aria-labelledby="story-title">
       <div class="wrap">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Kisah Kami</p>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="story-title">Our <em>Story</em></h2>
           <p class="sec-lead" data-bind="copy.storyIntro">Sebuah perjalanan sederhana, dari pertemuan yang tak direncanakan hingga janji yang kami ikrarkan.</p>
         </header>
@@ -302,23 +286,23 @@
     </section>
 
     <!-- 10 · OUR MOMENT -->
-    <section id="gallery" class="gallery section section--linen" data-nav="gallery" aria-labelledby="gallery-title">
+    <section id="gallery" class="gallery section" data-nav="gallery" aria-labelledby="gallery-title">
       <div class="wrap">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Galeri</p>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="gallery-title">Our <em>Moment</em></h2>
           <p class="sec-lead" data-bind="copy.galleryIntro">Potongan waktu yang ingin kami simpan dan bagikan bersama Anda.</p>
         </header>
       </div>
-      <ul class="mosaic" id="gallery-grid"></ul>
+      <div class="mosaic" id="gallery-grid" data-stagger="90"></div>
     </section>
 
     <!-- 11 · RSVP -->
     <section id="rsvp" class="rsvp section" data-nav="rsvp" aria-labelledby="rsvp-title">
       <div class="wrap wrap--narrow">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">RSVP · Konfirmasi Kehadiran</p>
-          <h2 class="title" id="rsvp-title">Kindly <em>Reply</em></h2>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
+          <h2 class="title" id="rsvp-title"><em>RSVP</em></h2>
           <p class="sec-lead" data-bind="copy.rsvpIntro">Kehadiran dan doa restu Anda adalah hadiah terindah bagi kami. Mohon konfirmasi kehadiran melalui formulir berikut.</p>
           <p class="sec-note" data-bind="copy.rsvpDeadline" data-hide-empty="copy.rsvpDeadline" hidden></p>
         </header>
@@ -409,7 +393,6 @@
       <div class="wrap wrap--narrow">
         <div class="atap" aria-hidden="true"><svg><use href="#i-atap"/></svg></div>
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Doa &amp; Ucapan</p>
           <h2 class="title" id="wishes-title">Wedding <em>Wishes</em></h2>
           <p class="sec-lead" data-bind="copy.wishesIntro">Untaian doa dan ucapan dari keluarga, sahabat, dan orang-orang terkasih.</p>
         </header>
@@ -424,7 +407,7 @@
     <section id="gift" class="gift section section--linen" data-nav="gift" aria-labelledby="gift-title">
       <div class="wrap wrap--narrow">
         <header class="sec-head" data-reveal>
-          <p class="eyebrow">Tanda Kasih</p>
+          <svg class="sec-mark" aria-hidden="true"><use href="#i-atap"/></svg>
           <h2 class="title" id="gift-title">Wedding <em>Gift</em></h2>
           <p class="sec-lead" data-bind="gift.intro">Bagi Bapak/Ibu/Saudara/i yang ingin mengirimkan hadiah pernikahan dapat melalui transfer bank di bawah ini :</p>
         </header>
@@ -436,7 +419,7 @@
         </div>
         <div class="collapse" id="gift-panel" inert>
           <div class="collapse__inner">
-            <ul class="accounts" id="gift-accounts" aria-label="Rekening bank"></ul>
+            <ul class="accounts" id="gift-accounts" aria-label="Rekening bank" data-stagger="140"></ul>
           </div>
         </div>
       </div>
@@ -444,15 +427,9 @@
 
     <!-- 14 · CLOSING -->
     <section id="closing" class="closing section section--night" data-nav="closing" aria-labelledby="closing-title">
-      <figure class="closing__figure" data-reveal>
-        <picture class="pic">
-          <source type="image/avif" srcset="assets/images/cover/closing-lantern-640.avif 640w, assets/images/cover/closing-lantern-960.avif 960w, assets/images/cover/closing-lantern-1440.avif 1440w" sizes="(min-width: 1024px) 520px, 100vw">
-          <source type="image/webp" srcset="assets/images/cover/closing-lantern-640.webp 640w, assets/images/cover/closing-lantern-960.webp 960w, assets/images/cover/closing-lantern-1440.webp 1440w" sizes="(min-width: 1024px) 520px, 100vw">
-          <img src="assets/images/cover/closing-lantern-960.webp" alt="Alghifari dan Laeli diterangi cahaya lentera di malam hari" width="2400" height="3600" loading="lazy" decoding="async">
-        </picture>
-      </figure>
+      <figure class="closing__figure" data-reveal="image" data-slot="closing"></figure>
       <div class="wrap closing__body">
-        <h2 class="title" id="closing-title" data-reveal>Terima <em>Kasih</em></h2>
+        <h2 class="title" id="closing-title" data-reveal>Thank <em>You</em></h2>
         <p class="closing__text" data-bind="copy.closing" data-reveal>Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu kepada kami.</p>
         <p class="closing__salam" data-bind="copy.closingSalam" data-reveal>Wassalamu’alaikum Warahmatullahi Wabarakatuh</p>
         <div class="closing__sign" data-reveal>
@@ -476,11 +453,11 @@ Bapak Misbah Hidayat &amp; Ibu Iin Suryani</p>
 
   <!-- ===================================================== FLOATING UI -->
   <nav class="dock" aria-label="Navigasi undangan">
-    <a class="dock__link" href="#couple" data-nav="couple"><svg aria-hidden="true"><use href="#i-rings"/></svg><span>Mempelai</span></a>
-    <a class="dock__link" href="#events" data-nav="events"><svg aria-hidden="true"><use href="#i-calendar"/></svg><span>Acara</span></a>
-    <a class="dock__link" href="#gallery" data-nav="gallery"><svg aria-hidden="true"><use href="#i-image"/></svg><span>Galeri</span></a>
+    <a class="dock__link" href="#couple" data-nav="couple"><svg aria-hidden="true"><use href="#i-rings"/></svg><span>Couple</span></a>
+    <a class="dock__link" href="#events" data-nav="events"><svg aria-hidden="true"><use href="#i-calendar"/></svg><span>Events</span></a>
+    <a class="dock__link" href="#gallery" data-nav="gallery"><svg aria-hidden="true"><use href="#i-image"/></svg><span>Gallery</span></a>
     <a class="dock__link" href="#rsvp" data-nav="rsvp"><svg aria-hidden="true"><use href="#i-mail"/></svg><span>RSVP</span></a>
-    <a class="dock__link" href="#gift" data-nav="gift"><svg aria-hidden="true"><use href="#i-gift"/></svg><span>Hadiah</span></a>
+    <a class="dock__link" href="#gift" data-nav="gift"><svg aria-hidden="true"><use href="#i-gift"/></svg><span>Gift</span></a>
   </nav>
 
   <button class="music" id="music-toggle" type="button" aria-pressed="false" aria-label="Putar musik" hidden>
@@ -509,7 +486,6 @@ Bapak Misbah Hidayat &amp; Ibu Iin Suryani</p>
   </noscript>
 
   <!-- Scripts run in order after the page is parsed. Edit content in js/config.js only. -->
-  <script defer src="js/config.js"></script>
   <script defer src="js/utils.js"></script>
   <script defer src="js/guest.js"></script>
   <script defer src="js/countdown.js"></script>

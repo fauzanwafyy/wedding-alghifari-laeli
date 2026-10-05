@@ -45,8 +45,10 @@ def prepare_site():
         shutil.rmtree(TEST_DIR)
     shutil.copytree(ROOT, TEST_DIR, ignore=shutil.ignore_patterns(".git", "tests", "node_modules"))
     cfg = os.path.join(TEST_DIR, "js", "config.js")
-    s = open(cfg).read().replace("PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE", FAKE_API)
-    open(cfg, "w").write(s)
+    s = open(cfg, encoding="utf8").read()
+    s, n = re.subn(r'apiUrl:\s*"[^"]*"', f'apiUrl: "{FAKE_API}"', s, count=1)
+    assert n == 1, "rsvp.apiUrl not found in config.js"
+    open(cfg, "w", encoding="utf8").write(s)
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a, **k):
             pass
@@ -59,8 +61,13 @@ def prepare_site():
 async def route_api(route):
     req = route.request
     tail = req.url[len(FAKE_API):]
-    resp = await route.fetch(url=EMU + "/exec" + tail)
-    await route.fulfill(response=resp)
+    try:
+        resp = await route.fetch(url=EMU + "/exec" + tail)
+        await route.fulfill(response=resp)
+    except Exception:
+        # The page/context was closed while a background request (wishes polling)
+        # was in flight. Nothing to assert on; ignore.
+        pass
 
 
 async def new_page(browser, query="", w=390, h=844, reduced=False, perms=None):
@@ -210,9 +217,30 @@ async def main():
               maps and all(h == "https://maps.app.goo.gl/hkwfC3oZhdUQjaJB6" and t == "_blank" and "noopener" in r for h, t, r in maps), str(maps))
         cal = await page.get_attribute("#calendar-link", "href")
         check("calendar URL: Google Calendar template", cal.startswith("https://calendar.google.com/calendar/render?action=TEMPLATE"), cal[:80])
-        check("calendar URL: correct UTC dates", "dates=20261021T013000Z%2F20261021T050000Z" in cal, cal)
+        check("calendar URL: starts at Akad 08.30 WIB, no invented end time", "dates=20261021T013000Z%2F20261021T013000Z" in cal, cal)
         check("calendar URL: title/location/ctz", "Wedding+of+Alghifari" in cal and "SGB+Learning+Center" in cal and "ctz=Asia%2FJakarta" in cal)
+        check("calendar details keep 'Resepsi: 10.00 WIB – selesai'", "Resepsi%3A+10.00+WIB+%E2%80%93+selesai" in cal, cal)
         check("calendar opens in new tab", await page.get_attribute("#calendar-link", "target") == "_blank")
+
+        # ---------- Content corrections ----------
+        titles = await page.eval_on_selector_all(".event-card__title", "els => els.map(e => e.textContent)")
+        check("event cards: Akad Nikah + Resepsi", titles == ["Akad Nikah", "Resepsi"], str(titles))
+        times = await page.eval_on_selector_all(".event-card__time", "els => els.map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
+        check("Akad time 08.30 WIB", times and times[0].startswith("08.30") and "WIB" in times[0], str(times))
+        check("Resepsi time 10.00 WIB – selesai", len(times) > 1 and times[1].startswith("10.00") and "selesai" in times[1], str(times))
+        ev_cals = await page.eval_on_selector_all(".event-card__cal", "els => els.map(a => a.href)")
+        check("each event card has its own calendar link", len(ev_cals) == 2, str(len(ev_cals)))
+        if len(ev_cals) == 2:
+            check("Akad calendar entry 08.30 WIB", "dates=20261021T013000Z%2F20261021T013000Z" in ev_cals[0] and "text=Akad+Nikah" in ev_cals[0], ev_cals[0])
+            check("Resepsi calendar entry starts 10.00 WIB, end = start", "dates=20261021T030000Z%2F20261021T030000Z" in ev_cals[1] and "text=Resepsi" in ev_cals[1], ev_cals[1])
+        tags = await page.eval_on_selector_all(".person__tag", "els => els.map(e => e.textContent.trim())")
+        check("person tags without numbering", tags == ["The Groom", "The Bride"], str(tags))
+        body = await page.evaluate("document.body.innerText")
+        check("no 'No. 01/02' numbering left", not re.search(r"No\.\s*0\d", body))
+        dock = await page.eval_on_selector_all(".dock__link span", "els => els.map(e => e.textContent)")
+        check("dock labels (single language)", dock == ["Couple", "Events", "Gallery", "RSVP", "Gift"], str(dock))
+        cover_src = await page.evaluate("[...document.querySelectorAll('[data-slot=cover] img, [data-slot=stage-cover] img')].map(i => i.currentSrc || i.src).join(' ')")
+        check("cover uses awl-cover-3 (cover-03)", "cover-03" in cover_src, cover_src[:120])
 
         # ---------- Gift ----------
         await ctx.close()
@@ -225,12 +253,19 @@ async def main():
         check("gift panel opens (aria-expanded)", await page.get_attribute("#gift-toggle", "aria-expanded") == "true")
         n = await page.locator(".account").count()
         check("two bank accounts rendered", n == 2, str(n))
-        num = await page.text_content(".account__number")
-        check("account number displayed grouped", num == "7361 5297 51", num)
+        nums = await page.eval_on_selector_all(".account__number", "els => els.map(e => e.textContent)")
+        check("groom account BCA 7361529751 (grouped)", nums and nums[0] == "7361 5297 51", str(nums))
+        check("bride account BCA 7361504589 (grouped)", len(nums) > 1 and nums[1] == "7361 5045 89", str(nums))
+        holders = await page.eval_on_selector_all(".account__holder", "els => els.map(e => e.textContent.replace('a.n. ', '').trim())")
+        check("account holders", holders == ["MOH AGIL ALGHIFARI", "LAELI LUSPITA SARI"], str(holders))
         await page.click(".account__copy >> nth=0")
         await page.wait_for_timeout(300)
         clip = await page.evaluate("navigator.clipboard.readText()")
         check("copy puts raw digits on clipboard", clip == "7361529751", clip)
+        await page.click(".account__copy >> nth=1")
+        await page.wait_for_timeout(300)
+        clip = await page.evaluate("navigator.clipboard.readText()")
+        check("copy bride account", clip == "7361504589", clip)
         check("copy shows toast", "disalin" in (await page.text_content("#toast")) and await page.evaluate("document.getElementById('toast').classList.contains('is-visible')"))
         await page.screenshot(path=f"{SHOTS}/gift-open.png")
         await ctx.close()
@@ -242,7 +277,8 @@ async def main():
         await page.wait_for_timeout(500)
         items = await page.locator(".mosaic__btn").count()
         check("gallery renders 11 photos", items == 11, str(items))
-        await page.click(".mosaic__btn >> nth=2")
+        # Tiles live in column lists, so DOM order != photo order: pick photo 3 by its label.
+        await page.click(".mosaic__btn[aria-label^='Perbesar foto 3 dari']")
         await page.wait_for_timeout(500)
         check("lightbox opens", await page.evaluate("document.getElementById('lightbox').open"))
         check("lightbox counter 03", await page.text_content("#lb-index") == "03")

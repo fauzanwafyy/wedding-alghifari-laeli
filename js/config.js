@@ -29,6 +29,34 @@ const WEDDING_CONFIG = {
   },
 
   /* --------------------------------------------------------------------- *
+   *  PAGE PHOTOS: cover, header and closing.
+   *  All photos are listed in this file (couple portraits below, story and
+   *  gallery further down). See docs/PHOTO-REPLACEMENT-GUIDE.md.
+   *  `position` = which part of the photo stays visible when it is cropped
+   *  ("50% 40%" = horizontally centred, slightly above the middle).
+   * --------------------------------------------------------------------- */
+  images: {
+    // Opening cover (first screen) · source: awl-cover-3.jpg
+    cover: {
+      src: "assets/images/cover/cover-03", widths: [640, 960, 1440], w: 2400, h: 3600, color: "#66552b",
+      position: "50% 50%", positionDesktop: "48% 60%",
+      alt: "Alghifari dan Laeli berdiri berdampingan di beranda rumah joglo, terlihat di balik dedaunan",
+    },
+    // Header after opening (mobile) and the desktop side photo · source: awl-cover-1.jpg
+    hero: {
+      src: "assets/images/cover/cover-01", widths: [640, 960, 1440], w: 2400, h: 3600, color: "#997a57",
+      position: "50% 32%", positionDesktop: "50% 72%",
+      alt: "Alghifari dan Laeli berdiri di depan rumah joglo berukir kayu",
+    },
+    // Closing "Thank You" section · source: awl-cover-4.jpg
+    closing: {
+      src: "assets/images/cover/cover-04", widths: [640, 960, 1440], w: 2400, h: 3600, color: "#382708",
+      position: "50% 40%",
+      alt: "Alghifari dan Laeli diterangi cahaya lentera di malam hari",
+    },
+  },
+
+  /* --------------------------------------------------------------------- *
    *  COUPLE & PARENTS
    * --------------------------------------------------------------------- */
   couple: {
@@ -42,8 +70,8 @@ const WEDDING_CONFIG = {
       mother: { prefix: "Ibu", name: "Atik" },
       instagram: "",                         // e.g. "username" (without @). Empty = hidden.
       photo: {
-        src: "assets/images/groom/groom",
-        widths: [480, 800, 1200], w: 1365, h: 2048, color: "#6e7150",
+        src: "assets/images/groom/groom",              // source: awl-groom.jpg
+        widths: [480, 800, 1200], w: 1365, h: 2048, color: "#6e7150", position: "50% 22%",
         alt: "Potret Moh Agil Alghifari mengenakan busana berwarna taupe",
       },
     },
@@ -57,8 +85,8 @@ const WEDDING_CONFIG = {
       mother: { prefix: "Ibu", name: "Iin Suryani" },
       instagram: "",
       photo: {
-        src: "assets/images/bride/bride",
-        widths: [480, 800, 1200], w: 1365, h: 2048, color: "#77855d",
+        src: "assets/images/bride/bride",              // source: awl-bride.jpg
+        widths: [480, 800, 1200], w: 1365, h: 2048, color: "#77855d", position: "50% 24%",
         alt: "Potret Laeli Luspitasari menggenggam buket bunga putih",
       },
     },
@@ -90,10 +118,7 @@ const WEDDING_CONFIG = {
   },
 
   /* --------------------------------------------------------------------- *
-   *  EVENTS
-   *  NOTE: The brief lists BOTH events as "Akad Nikah" (08:30 and 10:00).
-   *  This is preserved exactly. If the second one should be e.g. "Resepsi",
-   *  change its `title` below.
+   *  EVENTS: one card per event.
    *  endTime: "HH:MM" or null.  endText: shown after the start time when
    *  endTime is null (e.g. "selesai" → "10.00 WIB – selesai").
    * --------------------------------------------------------------------- */
@@ -111,7 +136,7 @@ const WEDDING_CONFIG = {
       note: "",
     },
     {
-      title: "Akad Nikah",
+      title: "Resepsi",
       date: "2026-10-21",
       startTime: "10:00",
       endTime: null,
@@ -126,14 +151,17 @@ const WEDDING_CONFIG = {
 
   /* --------------------------------------------------------------------- *
    *  SAVE THE DATE (Google Calendar)
-   *  Start = first event. The brief gives no end time ("selesai"), so the
-   *  calendar entry ends at `end` below. Adjust if needed.
+   *  - The main "Save the Date" button saves the day, starting at the first
+   *    event (Akad Nikah, 08.30 WIB).
+   *  - Each event card has its own button (Akad Nikah 08.30, Resepsi 10.00).
+   *  No end time is invented: when an event has no `endTime`, the calendar
+   *  entry ends at the same moment it starts (Google Calendar needs an end
+   *  value) and the description repeats the official "10.00 WIB – selesai".
    * --------------------------------------------------------------------- */
   calendar: {
-    title: "Wedding of Alghifari & Laeli",
-    start: "2026-10-21T08:30:00+07:00",
-    end: "2026-10-21T12:00:00+07:00",
-    location: "SGB Learning Center, Jl. Desa Cilember, Megamendung, Cisarua, Kabupaten Bogor, Jawa Barat 16750",
+    title: "The Wedding of Alghifari & Laeli",
+    eventTitleSuffix: " · Alghifari & Laeli",   // per-event entries: "Resepsi · Alghifari & Laeli"
+    location: "",                                // empty = venue.name + venue.address (above)
     description:
       "Dengan penuh rasa syukur, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dan memberikan doa restu di hari pernikahan kami.",
   },
@@ -145,46 +173,42 @@ const WEDDING_CONFIG = {
     {
       number: "01",
       title: "Pertemuan",
-      subtitle: "The Meeting",
       paragraphs: [
         "Tidak ada yang benar-benar terjadi secara kebetulan di dunia ini. Segalanya telah tersusun rapi oleh Sang Maha Kuasa, termasuk tentang kepada siapa hati ini akhirnya memilih untuk jatuh cinta.",
         "Hari itu, tanpa pernah kita duga sebelumnya, kita dipertemukan di tempat yang sama, dalam satu pekerjaan. Sebuah pertemuan sederhana yang saat itu mungkin terasa biasa saja, namun ternyata menjadi awal dari perjalanan panjang yang membawa kita sampai sejauh ini.",
       ],
       image: {
-        src: "assets/images/story/story-01", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#66552b",
-        alt: "Alghifari dan Laeli terlihat di balik dedaunan di depan rumah joglo",
+        src: "assets/images/story/story-01", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#381f02", position: "50% 52%", // source: awl-cover-5.jpg
+        alt: "Alghifari dan Laeli membawa lentera di tengah hutan pada malam hari",
       },
     },
     {
       number: "02",
       title: "Pendekatan",
-      subtitle: "The Courtship",
       paragraphs: [
         "Seiring berjalannya waktu, katanya cinta dapat tumbuh dari kebersamaan. Dari obrolan-obrolan kecil yang sederhana, perlahan tumbuh rasa nyaman yang membuat kami ingin saling mengenal lebih jauh.",
         "Hingga beberapa bulan kemudian, tanpa banyak rencana yang rumit, kami memutuskan untuk melangkah bersama dalam sebuah hubungan. Dari situlah, cerita kami perlahan dimulai.",
       ],
       image: {
-        src: "assets/images/story/story-02", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#8d7653",
+        src: "assets/images/story/story-02", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#8d7653", position: "50% 55%", // source: awl-cover-2.jpg
         alt: "Alghifari dan Laeli saling memandang di beranda rumah joglo",
       },
     },
     {
       number: "03",
       title: "Lamaran",
-      subtitle: "The Proposal",
       paragraphs: [
         "Perjalanan kami tentu bukan tanpa ujian dan cerita. Ada banyak hal yang harus kami lewati, ada jalan yang tidak selalu mudah, dan ada waktu-waktu yang mengajarkan kami tentang kesabaran.",
         "Namun, setiap proses yang kami lalui justru membuat kami semakin mengenal, memahami, dan menguatkan satu sama lain. Hingga pada akhirnya, kami semakin yakin bahwa perjalanan ini layak untuk diperjuangkan bersama.",
       ],
       image: {
-        src: "assets/images/story/story-03", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#44532f",
+        src: "assets/images/story/story-03", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#44532f", position: "50% 62%", // source: awl-cover-6.jpg
         alt: "Alghifari dan Laeli berdiri berdampingan di padang rumput",
       },
     },
     {
       number: "04",
       title: "Pernikahan",
-      subtitle: "The Wedding",
       paragraphs: [
         "Kami percaya, bukan karena bertemu lalu berjodoh, tetapi karena berjodohlah Allah SWT mempertemukan kami dengan cara terbaik-Nya.",
         "Dengan rasa penuh syukur, kami memutuskan untuk mengikrarkan janji suci pernikahan pada tanggal 21 Oktober 2026.",
@@ -192,7 +216,7 @@ const WEDDING_CONFIG = {
         "Hari ini, kami siap untuk melangkah lebih jauh, bersama.",
       ],
       image: {
-        src: "assets/images/story/story-04", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#856745",
+        src: "assets/images/story/story-04", widths: [480, 800, 1200], w: 2400, h: 3600, color: "#856745", position: "50% 58%", // source: awl-cover-8.jpg
         alt: "Alghifari dan Laeli berdiri berdampingan di depan pintu rumah joglo",
       },
     },
@@ -201,7 +225,10 @@ const WEDDING_CONFIG = {
   /* --------------------------------------------------------------------- *
    *  GALLERY: "Our Moment"
    *  Order = display order. Add `wide: true` for landscape photos.
+   *  gallery-01 … gallery-10 = awl-gallery-01 … 10.jpg · gallery-11 = awl-cover-7.jpg
+   *  `galleryBackdrop` (below) = the very soft blurred photo behind the gallery.
    * --------------------------------------------------------------------- */
+  galleryBackdrop: "assets/images/gallery/gallery-backdrop.webp",
   gallery: [
     { src: "assets/images/gallery/gallery-01", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#495b39", alt: "Alghifari dan Laeli berjalan bergandengan di antara bunga kosmos" },
     { src: "assets/images/gallery/gallery-02", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#8da57e", alt: "Alghifari dan Laeli tersenyum di tengah rerumputan hijau" },
@@ -209,7 +236,7 @@ const WEDDING_CONFIG = {
     { src: "assets/images/gallery/gallery-04", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#8d9b85", alt: "Laeli bersandar di bahu Alghifari di atas bangku kayu" },
     { src: "assets/images/gallery/gallery-05", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#777850", alt: "Alghifari dan Laeli berdiri di tepi aliran sungai berbatu" },
     { src: "assets/images/gallery/gallery-06", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#707247", alt: "Alghifari dan Laeli di atas jembatan kayu di tengah hutan" },
-    { src: "assets/images/gallery/gallery-field", widths: [800, 1600], w: 2400, h: 1600, color: "#40502d", alt: "Alghifari dan Laeli berjalan di padang rumput di depan rumah beratap genteng", wide: true },
+    { src: "assets/images/gallery/gallery-11", widths: [800, 1600], w: 2400, h: 1600, color: "#40502d", alt: "Alghifari dan Laeli berjalan di padang rumput di depan rumah beratap genteng", wide: true },
     { src: "assets/images/gallery/gallery-07", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#565a37", alt: "Alghifari dan Laeli berdiri di jembatan di bawah rimbun pakis" },
     { src: "assets/images/gallery/gallery-08", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#56612a", alt: "Alghifari dan Laeli melintasi jembatan kecil di tengah taman" },
     { src: "assets/images/gallery/gallery-09", widths: [480, 800, 1600], w: 2400, h: 3600, color: "#8f8878", alt: "Alghifari dan Laeli berdiri di depan rumah putih bergaya kolonial" },
@@ -218,15 +245,14 @@ const WEDDING_CONFIG = {
 
   /* --------------------------------------------------------------------- *
    *  WEDDING GIFT
-   *  NOTE: Both accounts are currently identical, exactly as provided in
-   *  the brief. Correct them here if needed.
+   *  accountNumber: digits only (spaces are added automatically on screen).
    * --------------------------------------------------------------------- */
   gift: {
     intro:
       "Bagi Bapak/Ibu/Saudara/i yang ingin mengirimkan hadiah pernikahan dapat melalui transfer bank di bawah ini :",
     accounts: [
-      { label: "Mempelai Pria", bank: "BCA", accountNumber: "7361529751", accountHolder: "MOH AGIL ALGHIFARI" },
-      { label: "Mempelai Wanita", bank: "BCA", accountNumber: "7361529751", accountHolder: "MOH AGIL ALGHIFARI" },
+      { label: "The Groom", bank: "BCA", accountNumber: "7361529751", accountHolder: "MOH AGIL ALGHIFARI" },
+      { label: "The Bride", bank: "BCA", accountNumber: "7361504589", accountHolder: "LAELI LUSPITA SARI" },
     ],
   },
 
@@ -235,7 +261,7 @@ const WEDDING_CONFIG = {
    *  Paste your Web App URL (ends with /exec). See docs/GOOGLE-SHEETS.md.
    * --------------------------------------------------------------------- */
   rsvp: {
-    apiUrl: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+    apiUrl: "https://script.google.com/macros/s/AKfycbxAJ-qHfMK--DcGSp1C_9E1wrarz_hrWl2teccNZPfjWnxheVE5KCtGyzRTmHYj-7gm/exec",
     closed: false,                // true = stop accepting RSVPs (wishes stay visible)
     maxGuests: 5,                 // max people per RSVP (including the guest)
     nameMaxLength: 80,

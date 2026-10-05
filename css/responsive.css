@@ -45,12 +45,16 @@
   .person--bride .person__body { margin-left: auto; }
 
   .chapters { max-width: 52rem; }
-  .chapter { grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; }
+  .chapter { grid-template-columns: 16rem 1fr; gap: 3.5rem; align-items: center; }
+  .chapter--alt { grid-template-columns: 1fr 16rem; }
   .chapter__figure, .chapter--alt .chapter__figure { width: 100%; margin: 0; }
   .chapter--alt .chapter__figure { order: 2; }
-  .chapter + .chapter::before { display: none; }
 
-  .mosaic { gap: 0.75rem; padding-inline: 1.5rem; }
+  .mosaic { max-width: 40rem; }
+  .mosaic__group { gap: 1.5rem; }
+  .mosaic__col, .mosaic__row { gap: 1.5rem; }
+  .mosaic__col--2 { padding-top: 4rem; }
+  .events__list { max-width: 44rem; grid-template-columns: 1fr 1fr; align-items: stretch; }
   .accounts { grid-template-columns: 1fr 1fr; }
   .account__number { font-size: 1.9rem; }
 }
@@ -71,25 +75,27 @@
     display: block; position: fixed; top: 0; bottom: 0; left: 0; right: var(--col);
     overflow: hidden; background: var(--c-night);
   }
-  .stage__pic { position: absolute; inset: 0; }
-  .stage__pic img { width: 100%; height: 100%; object-fit: cover; }
-  .stage__pic--night img { object-position: 50% 56%; transform: scale(1.06); transition: transform 8s var(--ease-out); }
-  .stage__pic--day img { object-position: 50% 72%; }
-  .stage__pic--day { opacity: 0; transition: opacity 1.8s ease 0.35s; }
-  .is-open .stage__pic--day { opacity: 1; }
-  html.is-ready .stage__pic--night img { transform: scale(1); }
+  .stage__slot, .stage__slot .pic { position: absolute; inset: 0; }
+  .stage__slot .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .stage__pic--cover img { transform: scale(1.06); transition: transform 8s var(--ease-out); }
+  html.is-ready .stage__pic--cover img { transform: scale(1); }
+  .stage__slot--hero { opacity: 0; transition: opacity 1.8s var(--ease-soft) 0.35s; }
+  .stage__slot--hero img { transform: scale(1.04); transition: transform 3.2s var(--ease-soft) 0.35s; }
+  .is-open .stage__slot--hero { opacity: 1; }
+  .is-open .stage__slot--hero img { transform: scale(1); }
   .stage__shade {
     position: absolute; inset: 0;
     background:
-      linear-gradient(90deg, rgba(23, 19, 15, 0.5) 0%, rgba(23, 19, 15, 0) 55%),
-      linear-gradient(0deg, rgba(23, 19, 15, 0.72) 0%, rgba(23, 19, 15, 0) 42%);
+      linear-gradient(90deg, rgba(31, 27, 24, 0.45) 0%, rgba(31, 27, 24, 0) 50%),
+      linear-gradient(0deg, rgba(31, 27, 24, 0.7) 0%, rgba(31, 27, 24, 0) 40%);
   }
   .stage__caption {
     position: absolute; left: clamp(2.5rem, 5vw, 5rem); bottom: clamp(2.5rem, 8vh, 5rem); max-width: 80%;
     color: var(--c-on-night); opacity: 0; transform: translateY(12px);
-    transition: opacity 1.2s var(--ease-out) 1s, transform 1.2s var(--ease-out) 1s;
+    transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
   }
-  .is-open .stage__caption { opacity: 1; transform: none; }
+  /* Shown once the hero (same names) has scrolled away, so the title never appears twice */
+  .is-open.is-past-hero .stage__caption { opacity: 1; transform: none; }
   .stage__names {
     font-family: var(--f-display); font-weight: 300; font-variation-settings: "opsz" 144;
     font-size: clamp(3.5rem, 5.6vw, 6rem); line-height: 0.95; letter-spacing: -0.02em;
@@ -101,13 +107,20 @@
   .invitation { width: var(--col); margin-left: auto; min-height: 100vh; box-shadow: -1px 0 0 rgba(0, 0, 0, 0.25); }
 
   /* The cover only covers the column; the stage shows the photograph */
-  .cover { left: auto; width: var(--col); }
+  .cover { left: auto; width: var(--col); background: var(--c-ivory) var(--paper); color: var(--c-ink); }
   .cover__media, .cover__shade { display: none; }
   .cover::before {
-    content: ""; position: absolute; left: 50%; top: 50%; width: 900px; aspect-ratio: 1; transform: translate(-50%, -50%);
-    background: radial-gradient(closest-side, rgba(216, 160, 76, 0.16), rgba(216, 160, 76, 0.04) 55%, transparent 72%);
-    pointer-events: none;
+    content: ""; position: absolute; inset: 1.25rem; pointer-events: none;
+    border: 1px solid var(--c-hair-gold); outline: 1px solid var(--c-hair); outline-offset: -8px;
   }
+  .cover .eyebrow--night { color: var(--c-clay); }
+  .cover__names { color: var(--c-ink); }
+  .cover .amp { color: var(--c-clay); }
+  .cover__date, .cover__to, .cover__note { color: var(--c-ink-soft); }
+  .cover__name { color: var(--c-ink); border-color: var(--c-hair-gold); }
+  .cover .btn--lantern { color: var(--c-ivory); background: var(--c-ink); border-color: var(--c-ink); }
+  .cover .btn--lantern:hover { background: var(--c-clay); border-color: var(--c-clay); }
+  .cover :focus-visible { outline-color: var(--c-clay); }
   .cover__content { justify-content: center; gap: clamp(4rem, 12vh, 7rem); }
   .cover__names { font-size: clamp(3.6rem, 4.6vw, 4.6rem); }
 
@@ -125,10 +138,12 @@
   .person--bride .person__figure { order: 0; justify-self: end; margin-right: 0; }
   .person--bride .person__body { text-align: right; margin-left: auto; }
 
-  .chapter { grid-template-columns: 1fr; gap: 2rem; }
-  .chapter__figure { width: 80%; }
+  .chapter, .chapter--alt { grid-template-columns: 1fr; gap: 2.25rem; }
+  .chapter__figure { width: min(68%, 16.5rem); }
   .chapter--alt .chapter__figure { order: 0; margin-left: auto; }
-  .chapter + .chapter::before { display: block; }
+  .events__list { grid-template-columns: 1fr; max-width: 26rem; }
+  .mosaic { max-width: 34rem; }
+  .mosaic__col--2 { padding-top: 3rem; }
 
   .accounts { grid-template-columns: 1fr; }
 
@@ -161,7 +176,10 @@
     scroll-behavior: auto !important;
   }
   .js [data-reveal] { opacity: 1; transform: none; }
-  .cover__media img, .stage__pic--night img { transform: none; }
+  .js [data-reveal="image"] .pic { clip-path: none; }
+  .js [data-reveal="image"] .pic img, .hero__media img, .stage__slot--hero img { transform: none; }
+  .js .sec-head[data-reveal] .sec-mark { stroke-dashoffset: 0; }
+  .cover__media img, .stage__pic--cover img { transform: none; }
   .js .cover__top > *, .js .cover__guest > * { opacity: 1; transform: none; animation: none; }
   .music__bars i { animation: none; transform: scaleY(0.6); }
   .scroll-cue::after { animation: none; opacity: 1; }

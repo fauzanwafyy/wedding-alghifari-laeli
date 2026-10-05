@@ -1,41 +1,62 @@
 /**
- * "Our Moment": editorial mosaic + accessible lightbox (native <dialog>).
+ * "Our Moment": staggered editorial grid + accessible lightbox (native <dialog>).
+ * Portraits flow into 2 columns (the second gently offset, like prints laid
+ * on a table); landscape photos (`wide: true`) sit on their own full row.
  * Keyboard: ←/→ to navigate, Esc to close. Touch: swipe left/right.
  */
 (function (AWL) {
   "use strict";
   const { $, h, picture } = AWL;
 
-  function initGallery(images) {
+  const COLUMNS = 2; // two calm columns on every screen size; the second is gently offset
+
+  function initGallery(images, backdrop) {
     const grid = $("#gallery-grid");
     const dialog = $("#lightbox");
     if (!grid || !images || !images.length) return;
 
-    // Rhythm: one feature (full width), then two halves; landscapes always span.
-    let slot = 0;
-    images.forEach((img, i) => {
-      let variant;
-      if (img.wide) variant = "wide";
-      else {
-        variant = slot % 3 === 0 ? "feature" : "half";
-        slot += 1;
-      }
-      const sizes =
-        variant === "half"
-          ? "(min-width: 1024px) 260px, (min-width: 768px) 33vw, 50vw"
-          : "(min-width: 1024px) 520px, (min-width: 768px) 66vw, 100vw";
-      const btn = h(
-        "button",
-        {
+    const section = $("#gallery");
+    // Absolute URL: a url() inside a CSS variable would otherwise resolve against css/
+    if (section && backdrop) section.style.setProperty("--gallery-backdrop", `url("${new URL(backdrop, document.baseURI).href}")`);
+
+    // Build every tile once; layout() only moves them between columns.
+    const tiles = images.map((img, i) =>
+      h("li", { class: `mosaic__item${img.wide ? " mosaic__item--wide" : ""}`, "data-reveal": "image" },
+        h("button", {
           type: "button",
           class: "mosaic__btn",
           "aria-label": `Perbesar foto ${i + 1} dari ${images.length}: ${img.alt}`,
           onclick: () => open(i),
-        },
-        picture(img, { sizes })
-      );
-      grid.append(h("li", { class: `mosaic__item mosaic__item--${variant}`, "data-reveal": "" }, btn));
-    });
+        }, picture(img, {
+          sizes: img.wide
+            ? "(min-width: 1024px) 440px, (min-width: 768px) 600px, calc(100vw - 48px)"
+            : "(min-width: 1024px) 220px, (min-width: 768px) 290px, 45vw",
+        })))
+    );
+
+    let current = 0;
+    function layout() {
+      const n = COLUMNS;
+      const frag = document.createDocumentFragment();
+      let group = null;
+      let k = 0;
+      tiles.forEach((tile, i) => {
+        if (images[i].wide) {
+          group = null;
+          frag.append(h("ul", { class: "mosaic__row", role: "list" }, tile));
+          return;
+        }
+        if (!group) {
+          group = Array.from({ length: n }, (_, c) => h("ul", { class: `mosaic__col mosaic__col--${c + 1}`, role: "list" }));
+          frag.append(h("div", { class: `mosaic__group mosaic__group--${n}` }, ...group));
+          k = 0;
+        }
+        group[k % n].append(tile); // left-to-right reading order
+        k += 1;
+      });
+      grid.replaceChildren(frag);
+    }
+    layout();
 
     if (!dialog || typeof dialog.showModal !== "function") {
       // Very old browsers: no lightbox; images stay in the grid.
@@ -47,10 +68,9 @@
     const idx = $("#lb-index", dialog);
     const total = $("#lb-total", dialog);
     const caption = $("#lb-caption", dialog);
-    let current = 0;
     let opener = null;
 
-    total.textContent = String(images.length);
+    total.textContent = String(images.length).padStart(2, "0");
 
     const preload = (i) => {
       const img = images[(i + images.length) % images.length];
@@ -63,7 +83,7 @@
     function show(i) {
       current = (i + images.length) % images.length;
       const img = images[current];
-      const pic = picture(img, { sizes: "100vw", loading: "eager", className: "lightbox__pic" });
+      const pic = picture(img, { sizes: "100vw", loading: "eager", className: "lightbox__pic", position: "50% 50%" });
       stage.replaceChildren(pic);
       idx.textContent = String(current + 1).padStart(2, "0");
       caption.textContent = img.alt;

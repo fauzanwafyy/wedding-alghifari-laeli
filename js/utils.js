@@ -34,33 +34,50 @@
     return el;
   }
 
-  /** Build a responsive <picture> (AVIF + WebP) from a config image object. */
-  function picture(img, { sizes = "100vw", loading = "lazy", priority = false, className = "" } = {}) {
+  const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+
+  /**
+   * Build a responsive <picture> (AVIF + WebP) from a config image object.
+   *   position      → object-position (keeps faces in frame when cropped)
+   *   onlyBelow:N   → not downloaded at all on screens ≥ N px (e.g. mobile-only photo)
+   *   onlyAbove:N   → only downloaded on screens ≥ N px (e.g. desktop side photo)
+   *   alt:false     → decorative (empty alt)
+   */
+  function picture(img, { sizes = "100vw", loading = "lazy", priority = false, className = "", fade = true,
+    position, onlyBelow, onlyAbove, alt } = {}) {
     const set = (ext) =>
       img.widths.map((w) => `${img.src}-${w}.${ext} ${Math.min(w, img.w)}w`).join(", ");
     const fallbackWidth = img.widths[Math.min(1, img.widths.length - 1)];
+    const altText = alt === false ? "" : img.alt || "";
+    const media = onlyAbove ? `(min-width: ${onlyAbove}px)` : null;
 
-    const pic = h("picture", { class: `pic pic--fade ${className}`.trim(), "data-alt": img.alt || "" });
+    const pic = h("picture", { class: `pic${fade ? " pic--fade" : ""} ${className}`.trim(), "data-alt": altText });
     if (img.color) pic.style.setProperty("--pic-color", img.color);
+    if (onlyBelow) pic.append(h("source", { media: `(min-width: ${onlyBelow}px)`, srcset: BLANK }));
     pic.append(
-      h("source", { type: "image/avif", srcset: set("avif"), sizes }),
-      h("source", { type: "image/webp", srcset: set("webp"), sizes })
+      h("source", { type: "image/avif", srcset: set("avif"), sizes, media }),
+      h("source", { type: "image/webp", srcset: set("webp"), sizes, media })
     );
     const el = h("img", {
-      src: `${img.src}-${fallbackWidth}.webp`,
-      alt: img.alt || "",
+      src: onlyAbove ? BLANK : `${img.src}-${fallbackWidth}.webp`,
+      alt: altText,
       width: img.w,
       height: img.h,
       loading,
       decoding: "async",
       fetchpriority: priority ? "high" : null,
     });
+    const pos = position || img.position;
+    if (pos) el.style.objectPosition = pos;
     el.addEventListener("error", () => pic.classList.add("is-broken"), { once: true });
     el.addEventListener("load", () => pic.classList.add("is-loaded"), { once: true });
     if (el.complete && el.naturalWidth) pic.classList.add("is-loaded");
     pic.append(el);
     return pic;
   }
+
+  /** Absolute moment for an event's start, e.g. ("2026-10-21", "10:00") → "2026-10-21T10:00:00+07:00". */
+  const eventMoment = (date, time, offset = "+07:00") => `${date}T${time}:00${offset}`;
 
   /* ---------------------------------------------------------------- dates -- */
 
@@ -94,7 +111,7 @@
   function cleanText(value, maxLength = 200) {
     const s = String(value ?? "")
       .normalize("NFC")
-      .replace(/[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁠-⁤﻿]/g, " ")
+      .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
     const chars = Array.from(s); // count by code points (emoji-safe)
@@ -171,5 +188,5 @@
     }
   }
 
-  Object.assign(AWL, { $, $$, prefersReducedMotion, h, picture, formatLongDate, dateParts, formatTime, cleanText, slugify, titleCase, groupDigits, uuid, store, toast, fetchWithTimeout });
+  Object.assign(AWL, { $, $$, prefersReducedMotion, h, picture, eventMoment, formatLongDate, dateParts, formatTime, cleanText, slugify, titleCase, groupDigits, uuid, store, toast, fetchWithTimeout });
 })(window.AWL = window.AWL || {});
