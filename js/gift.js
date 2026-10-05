@@ -3,7 +3,21 @@
  */
 (function (AWL) {
   "use strict";
-  const { $, h, groupDigits, toast } = AWL;
+  const { $, h, toast } = AWL;
+
+  /**
+   * Visual groups for an account number: 10 digits → 3·3·4 ("736 150 4589"),
+   * otherwise groups of 4. Groups are separate elements (no space characters),
+   * so selecting the number by hand also copies the plain digits.
+   */
+  const digitGroups = (d) => (d.length === 10 ? [d.slice(0, 3), d.slice(3, 6), d.slice(6)] : d.match(/.{1,4}/g) || []);
+
+  /** Each digit sits in an equal-width box: Fraunces has no tabular figures (no `tnum`). */
+  function accountNumber(digits) {
+    return h("p", { class: "account__number", "aria-label": `Nomor rekening ${digits.split("").join(" ")}` },
+      ...digitGroups(digits).map((g) =>
+        h("span", { class: "account__group" }, ...g.split("").map((c) => h("span", { class: "account__digit", text: c })))));
+  }
 
   async function copyText(text) {
     try {
@@ -74,7 +88,7 @@
           h("div", { class: "account__top" },
             h("span", { class: "account__label", text: acc.label }),
             h("span", { class: "account__bank", text: acc.bank })),
-          h("p", { class: "account__number", text: groupDigits(digits), "aria-label": `Nomor rekening ${digits.split("").join(" ")}` }),
+          accountNumber(digits),
           h("p", { class: "account__holder" }, h("span", { text: "a.n. " }), acc.accountHolder),
           btn
         )

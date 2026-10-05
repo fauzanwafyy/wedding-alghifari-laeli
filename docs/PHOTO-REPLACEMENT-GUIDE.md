@@ -25,9 +25,9 @@ in the `<head>` of `index.html` (last row), the HTML never hard-codes a photo.
 | Our Story · 02 Pendekatan | `story[1].image` | `assets/images/story/story-02` | `awl-cover-2.jpg` | 480, 800, 1200 | 2:3 portrait |
 | Our Story · 03 Lamaran | `story[2].image` | `assets/images/story/story-03` | `awl-cover-6.jpg` | 480, 800, 1200 | 2:3 portrait |
 | Our Story · 04 Pernikahan | `story[3].image` | `assets/images/story/story-04` | `awl-cover-8.jpg` | 480, 800, 1200 | 2:3 portrait |
-| Gallery photos 1–6 | `gallery[0]` … `gallery[5]` | `assets/images/gallery/gallery-01` … `gallery-06` | `awl-gallery-01.jpg` … `awl-gallery-06.jpg` | 480, 800, 1600 | 2:3 portrait |
+| Gallery photos 1–6 | `gallery[0]` … `gallery[5]` | `assets/images/gallery/gallery-01` … `gallery-06` | `awl-gallery-01.jpg` … `awl-gallery-06.jpg` | 480, 800, 1600 | 2:3 portrait (photos 1 and 4 are shown full width, cropped to 4:5) |
 | Gallery photo 7 (full-width landscape) | `gallery[6]` (`wide: true`) | `assets/images/gallery/gallery-11` | `awl-cover-7.jpg` | 800, 1600 | 3:2 landscape |
-| Gallery photos 8–11 | `gallery[7]` … `gallery[10]` | `assets/images/gallery/gallery-07` … `gallery-10` | `awl-gallery-07.jpg` … `awl-gallery-10.jpg` | 480, 800, 1600 | 2:3 portrait |
+| Gallery photos 8–11 | `gallery[7]` … `gallery[10]` | `assets/images/gallery/gallery-07` … `gallery-10` | `awl-gallery-07.jpg` … `awl-gallery-10.jpg` | 480, 800, 1600 | 2:3 portrait (photos 8 and 11 are shown full width, cropped to 4:5) |
 | Soft blurred background behind the gallery | `galleryBackdrop` | `assets/images/gallery/gallery-backdrop.webp` (single file) | `awl-gallery-04.jpg` | 360 × 540 | 2:3, pre-blurred |
 | Link preview (WhatsApp / social share) | `<meta property="og:image">` in `index.html` | `assets/images/meta/og-image.jpg` (single file) | made from `awl-cover-5.jpg` (lantern photo) with the names set on the left | 1200 × 630 | 1.91:1 |
 
@@ -176,7 +176,7 @@ Current values to start from:
 | Story 01–04 | `50% 52%` · `50% 55%` · `50% 62%` · `50% 58%` | n/a |
 
 Tip: change the number in steps of 5–10%, save, refresh. Check at phone width
-(see section 10). Story frames and gallery tiles are 2:3, so a 2:3 photo is
+(see section 10). Story frames and the half-width gallery tiles are 2:3, so a 2:3 photo is
 not cropped at all there and `position` has almost no effect.
 
 ---
@@ -196,8 +196,20 @@ is used in the gallery's enlarge buttons ("Perbesar foto 3 dari 11: …").
 
 ## 8. Add, remove or reorder gallery photos
 
-The gallery shows `gallery` in `js/config.js` **in array order**. Photos flow
-into two columns (left, right, left, right…); a `wide: true` photo takes a full row.
+The gallery shows `gallery` in `js/config.js` **in array order**, as a two-column
+mosaic with a fixed rhythm (the layout of the first design):
+
+1. **feature**: full width, cropped to **4:5**
+2. **half** + 3. **half**: side by side, **2:3** (not cropped)
+4. feature, 5–6. halves, and so on.
+
+A `wide: true` landscape photo always takes a full row at **3:2** and doesn't
+count in the rhythm. Current order: feature · half half · feature · half half ·
+**wide** · feature · half half · feature.
+
+A feature tile crops about 8% from the top and bottom of a 2:3 photo. If a face
+gets too close to the edge, add `position` to that photo's line (section 6),
+e.g. `position: "50% 35%"`.
 
 **Add a photo**
 
@@ -217,9 +229,12 @@ order; only the array order matters.
 
 Layout tips:
 
-- Keep an **even number of portrait photos between wide photos**, otherwise
-  one column ends with a gap.
-- Place a wide photo after a group of 4 or 6 portraits for a calm rhythm.
+- The rhythm is feature, half, half, so the grid looks complete when the number
+  of portrait photos between two wide photos (or before the end) is a multiple
+  of 3, or a multiple of 3 plus 1 (ending on a feature). Otherwise the last half
+  sits alone next to an empty space.
+- Put the strongest, most "hero" shots where a feature falls (1st, 4th, 7th…
+  portrait), and landscape photos where you want a pause.
 - 8–14 photos in total feels curated; much more makes the page long on phones.
 
 The lightbox counter ("03 / 11") updates automatically.

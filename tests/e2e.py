@@ -242,6 +242,14 @@ async def main():
         cover_src = await page.evaluate("[...document.querySelectorAll('[data-slot=cover] img, [data-slot=stage-cover] img')].map(i => i.currentSrc || i.src).join(' ')")
         check("cover uses awl-cover-3 (cover-03)", "cover-03" in cover_src, cover_src[:120])
 
+        # ---------- Verse ----------
+        v = await page.evaluate("""() => { const sec = document.querySelector('#verse'), s = getComputedStyle(sec), p = getComputedStyle(document.querySelector('.verse__text p'));
+          const fig = document.querySelector('.verse__fig').getBoundingClientRect(), r = sec.getBoundingClientRect();
+          return { size: parseFloat(p.fontSize), lh: parseFloat(p.lineHeight) / parseFloat(p.fontSize), wrap: p.textWrap || p.textWrapStyle, pt: s.paddingTop, pb: s.paddingBottom,
+                   cx: Math.round(fig.left + fig.width / 2 - (r.left + r.width / 2)), align: s.textAlign }; }""")
+        check("verse text ~1.125rem on 390px, line-height 1.6-1.7, balanced", 17 <= v["size"] <= 18.5 and 1.6 <= v["lh"] <= 1.7 and "balance" in str(v["wrap"]), str(v))
+        check("verse block centred (equal padding 96-128px, centred X)", v["pt"] == v["pb"] and 96 <= float(v["pt"][:-2]) <= 128 and abs(v["cx"]) <= 1 and v["align"] == "center", str(v))
+
         # ---------- Gift ----------
         await ctx.close()
         ctx, page = await new_page(b, perms=["clipboard-read", "clipboard-write"])
@@ -253,19 +261,25 @@ async def main():
         check("gift panel opens (aria-expanded)", await page.get_attribute("#gift-toggle", "aria-expanded") == "true")
         n = await page.locator(".account").count()
         check("two bank accounts rendered", n == 2, str(n))
-        nums = await page.eval_on_selector_all(".account__number", "els => els.map(e => e.textContent)")
-        check("groom account BCA 7361529751 (grouped)", nums and nums[0] == "7361 5297 51", str(nums))
-        check("bride account BCA 7361504589 (grouped)", len(nums) > 1 and nums[1] == "7361 5045 89", str(nums))
+        groups = await page.eval_on_selector_all(".account__number", "els => els.map(e => [...e.querySelectorAll('.account__group')].map(g => g.textContent).join(' '))")
+        check("groom account BCA 7361529751 shown as 736 152 9751", groups and groups[0] == "736 152 9751", str(groups))
+        check("bride account BCA 7361504589 shown as 736 150 4589", len(groups) > 1 and groups[1] == "736 150 4589", str(groups))
+        raw_text = await page.eval_on_selector_all(".account__number", "els => els.map(e => e.textContent)")
+        check("number text has no spaces (manual select-copy gives raw digits)", raw_text == ["7361529751", "7361504589"], str(raw_text))
+        widths = await page.eval_on_selector_all(".account__digit", "els => [...new Set(els.map(e => e.getBoundingClientRect().width.toFixed(2)))]")
+        check("all account digits have equal width (tabular)", len(widths) == 1, str(widths))
+        style = await page.eval_on_selector(".account__number", "e => { const s = getComputedStyle(e); return [s.fontFamily.split(',')[0], s.fontWeight, s.fontVariationSettings, s.fontVariantNumeric, s.color]; }")
+        check("account number style: Fraunces 480, opsz 28, lining+tabular, ink", style[0].strip('\"') == "Fraunces" and style[1] == "480" and "28" in style[2] and "lining-nums" in style[3] and "tabular-nums" in style[3] and style[4] == "rgb(43, 38, 34)", str(style))
         holders = await page.eval_on_selector_all(".account__holder", "els => els.map(e => e.textContent.replace('a.n. ', '').trim())")
         check("account holders", holders == ["MOH AGIL ALGHIFARI", "LAELI LUSPITA SARI"], str(holders))
-        await page.click(".account__copy >> nth=0")
-        await page.wait_for_timeout(300)
-        clip = await page.evaluate("navigator.clipboard.readText()")
-        check("copy puts raw digits on clipboard", clip == "7361529751", clip)
-        await page.click(".account__copy >> nth=1")
-        await page.wait_for_timeout(300)
-        clip = await page.evaluate("navigator.clipboard.readText()")
-        check("copy bride account", clip == "7361504589", clip)
+        expected = await page.evaluate("WEDDING_CONFIG.gift.accounts.map(a => a.accountNumber)")
+        check("config account numbers are 7361529751 / 7361504589", expected == ["7361529751", "7361504589"], str(expected))
+        for i, want in enumerate(expected):
+            await page.evaluate("navigator.clipboard.writeText('')")
+            await page.click(f".account__copy >> nth={i}")
+            await page.wait_for_timeout(300)
+            clip = await page.evaluate("navigator.clipboard.readText()")
+            check(f"copy button {i + 1} copies exactly {want} (no spaces)", clip == want and not any(c.isspace() for c in clip), repr(clip))
         check("copy shows toast", "disalin" in (await page.text_content("#toast")) and await page.evaluate("document.getElementById('toast').classList.contains('is-visible')"))
         await page.screenshot(path=f"{SHOTS}/gift-open.png")
         await ctx.close()
@@ -277,7 +291,13 @@ async def main():
         await page.wait_for_timeout(500)
         items = await page.locator(".mosaic__btn").count()
         check("gallery renders 11 photos", items == 11, str(items))
-        # Tiles live in column lists, so DOM order != photo order: pick photo 3 by its label.
+        seq = await page.evaluate("[...document.querySelectorAll('#gallery-grid > li')].map(li => li.className.replace('mosaic__item mosaic__item--', '')[0]).join('')")
+        check("gallery layout restored: feature/half/half rhythm, landscape row", seq == "fhhfhhwfhhf", seq)
+        geo = await page.evaluate("""() => { const g = document.querySelector('#gallery-grid'), s = getComputedStyle(g), sec = document.querySelector('#gallery').getBoundingClientRect();
+          const first = g.firstElementChild.getBoundingClientRect();
+          return { gap: [s.columnGap, s.rowGap], firstLeft: Math.round(first.left - sec.left), dims: [...g.querySelectorAll('img')].every(i => i.getAttribute('width') && i.getAttribute('height')) }; }""")
+        check("gallery gap 10px both directions, 24px gutter (390px)", geo["gap"] == ["10px", "10px"] and geo["firstLeft"] == 24, str(geo))
+        check("gallery images keep width/height (no layout shift)", geo["dims"])
         await page.click(".mosaic__btn[aria-label^='Perbesar foto 3 dari']")
         await page.wait_for_timeout(500)
         check("lightbox opens", await page.evaluate("document.getElementById('lightbox').open"))

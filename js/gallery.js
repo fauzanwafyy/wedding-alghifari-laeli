@@ -1,14 +1,21 @@
 /**
- * "Our Moment": staggered editorial grid + accessible lightbox (native <dialog>).
- * Portraits flow into 2 columns (the second gently offset, like prints laid
- * on a table); landscape photos (`wide: true`) sit on their own full row.
+ * "Our Moment": editorial mosaic + accessible lightbox (native <dialog>).
+ * Layout restored from the first design (commit 2901493): two columns where
+ * one feature photo spans the full width (4:5), followed by two halves side by
+ * side (2:3), repeating; landscape photos (`wide: true`) always take a full
+ * row (3:2). Photo order = order of `gallery` in js/config.js.
  * Keyboard: ←/→ to navigate, Esc to close. Touch: swipe left/right.
  */
 (function (AWL) {
   "use strict";
   const { $, h, picture } = AWL;
 
-  const COLUMNS = 2; // two calm columns on every screen size; the second is gently offset
+  // Rendered widths: phones = 100vw − 2×24px gutters (− 10px gap for halves);
+  // tablet = 46rem grid; desktop = the invitation column (≤ 560px).
+  const SIZES = {
+    half: "(min-width: 1024px) 250px, (min-width: 768px) 340px, calc(50vw - 29px)",
+    full: "(min-width: 1024px) 512px, (min-width: 768px) 688px, calc(100vw - 48px)",
+  };
 
   function initGallery(images, backdrop) {
     const grid = $("#gallery-grid");
@@ -19,44 +26,29 @@
     // Absolute URL: a url() inside a CSS variable would otherwise resolve against css/
     if (section && backdrop) section.style.setProperty("--gallery-backdrop", `url("${new URL(backdrop, document.baseURI).href}")`);
 
-    // Build every tile once; layout() only moves them between columns.
-    const tiles = images.map((img, i) =>
-      h("li", { class: `mosaic__item${img.wide ? " mosaic__item--wide" : ""}`, "data-reveal": "image" },
-        h("button", {
+    // Rhythm: one feature (full width), then two halves; landscapes always span.
+    let slot = 0;
+    images.forEach((img, i) => {
+      let variant;
+      if (img.wide) variant = "wide";
+      else {
+        variant = slot % 3 === 0 ? "feature" : "half";
+        slot += 1;
+      }
+      const btn = h(
+        "button",
+        {
           type: "button",
           class: "mosaic__btn",
           "aria-label": `Perbesar foto ${i + 1} dari ${images.length}: ${img.alt}`,
           onclick: () => open(i),
-        }, picture(img, {
-          sizes: img.wide
-            ? "(min-width: 1024px) 440px, (min-width: 768px) 600px, calc(100vw - 48px)"
-            : "(min-width: 1024px) 220px, (min-width: 768px) 290px, 45vw",
-        })))
-    );
+        },
+        picture(img, { sizes: variant === "half" ? SIZES.half : SIZES.full })
+      );
+      grid.append(h("li", { class: `mosaic__item mosaic__item--${variant}`, "data-reveal": "" }, btn));
+    });
 
     let current = 0;
-    function layout() {
-      const n = COLUMNS;
-      const frag = document.createDocumentFragment();
-      let group = null;
-      let k = 0;
-      tiles.forEach((tile, i) => {
-        if (images[i].wide) {
-          group = null;
-          frag.append(h("ul", { class: "mosaic__row", role: "list" }, tile));
-          return;
-        }
-        if (!group) {
-          group = Array.from({ length: n }, (_, c) => h("ul", { class: `mosaic__col mosaic__col--${c + 1}`, role: "list" }));
-          frag.append(h("div", { class: `mosaic__group mosaic__group--${n}` }, ...group));
-          k = 0;
-        }
-        group[k % n].append(tile); // left-to-right reading order
-        k += 1;
-      });
-      grid.replaceChildren(frag);
-    }
-    layout();
 
     if (!dialog || typeof dialog.showModal !== "function") {
       // Very old browsers: no lightbox; images stay in the grid.
