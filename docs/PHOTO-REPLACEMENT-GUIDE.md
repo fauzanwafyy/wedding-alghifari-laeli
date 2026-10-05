@@ -190,7 +190,9 @@ would describe it to someone on the phone:
 - Avoid: `"foto 5"`, `"prewedding"`, `"IMG_2041"`, or repeating the same text on every photo.
 
 Alt text is read aloud by screen readers, appears if a photo fails to load, and
-is used in the gallery's enlarge buttons ("Perbesar foto 3 dari 11: …").
+is used in the gallery's enlarge buttons ("Perbesar foto 3 dari 11: …"). It is
+not shown as visible text: the gallery and its lightbox show photos only (plus
+the "03 / 11" counter).
 
 ---
 

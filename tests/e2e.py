@@ -302,6 +302,11 @@ async def main():
         await page.wait_for_timeout(500)
         check("lightbox opens", await page.evaluate("document.getElementById('lightbox').open"))
         check("lightbox counter 03", await page.text_content("#lb-index") == "03")
+        lb = await page.evaluate("""() => { const d = document.getElementById('lightbox'), bar = d.querySelector('.lightbox__bar');
+          const img = d.querySelector('.lightbox__stage img');
+          return { caption: !!d.querySelector('#lb-caption, .lightbox__caption'), barKids: [...bar.children].map(c => c.className).join(','), count: d.querySelector('.lightbox__count').textContent.replace(/\\s+/g, ' ').trim(), alt: img && img.alt }; }""")
+        check("lightbox shows no photo caption (counter only)", not lb["caption"] and lb["barKids"] == "lightbox__count", str(lb))
+        check("lightbox image keeps its alt text for screen readers", bool(lb["alt"]), str(lb))
         await page.keyboard.press("ArrowRight")
         check("ArrowRight → 04", await page.text_content("#lb-index") == "04")
         await page.click(".lightbox__nav--prev")

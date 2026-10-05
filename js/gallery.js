@@ -4,6 +4,8 @@
  * one feature photo spans the full width (4:5), followed by two halves side by
  * side (2:3), repeating; landscape photos (`wide: true`) always take a full
  * row (3:2). Photo order = order of `gallery` in js/config.js.
+ * The lightbox shows the photo and a counter only (no visible caption); the
+ * `alt` text stays on the image for screen readers.
  * Keyboard: ←/→ to navigate, Esc to close. Touch: swipe left/right.
  */
 (function (AWL) {
@@ -59,7 +61,6 @@
     const stage = $(".lightbox__stage", dialog);
     const idx = $("#lb-index", dialog);
     const total = $("#lb-total", dialog);
-    const caption = $("#lb-caption", dialog);
     let opener = null;
 
     total.textContent = String(images.length).padStart(2, "0");
@@ -78,7 +79,6 @@
       const pic = picture(img, { sizes: "100vw", loading: "eager", className: "lightbox__pic", position: "50% 50%" });
       stage.replaceChildren(pic);
       idx.textContent = String(current + 1).padStart(2, "0");
-      caption.textContent = img.alt;
       preload(current + 1);
       preload(current - 1);
     }
