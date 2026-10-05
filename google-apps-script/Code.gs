@@ -1,4 +1,8 @@
 /**
+ * @OnlyCurrentDoc  Limits this script's access to the ONE spreadsheet it is attached to.
+ */
+
+/**
  * ============================================================================
  *  RSVP + Wedding Wishes backend
  *  The Wedding of Alghifari & Laeli · 21 October 2026
@@ -7,7 +11,7 @@
  *
  *  Setup (full guide: docs/GOOGLE-SHEETS.md)
  *   1. Create a Google Sheet → Extensions → Apps Script → paste this file.
- *   2. Run `setup` once (authorise when asked).
+ *   2. Run 'setup' once (authorise when asked).
  *   3. Deploy → New deployment → Web app
  *        Execute as: Me    ·    Who has access: Anyone
  *   4. Copy the Web App URL (ends with /exec) into js/config.js → rsvp.apiUrl
@@ -27,7 +31,7 @@
  */
 
 var SETTINGS = {
-  SPREADSHEET_ID: '',          // Leave '' when this script is bound to the sheet (recommended).
+  SPREADSHEET_ID: '',          // Keep '' : the script is attached to the RSVP sheet (with @OnlyCurrentDoc).
   SHEET_NAME: 'RSVP',
   TIMEZONE: 'Asia/Jakarta',
   MAX_NAME: 80,
@@ -83,7 +87,7 @@ function doPost(e) {
       return json_({ ok: false, error: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit lagi.' });
     }
 
-    sheet.appendRow([
+    writeRow_(sheet, [
       new Date(),
       safeCell_(data.slug),
       safeCell_(data.name),
@@ -123,7 +127,7 @@ function validationError_(field, message) {
 function cleanLine_(value) {
   return String(value == null ? '' : value)
     .replace(/<[^>]*>/g, '')
-    .replace(/[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁠-⁤﻿]/g, ' ')
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -132,7 +136,7 @@ function cleanMessage_(value) {
   return String(value == null ? '' : value)
     .replace(/\r\n?/g, '\n')
     .replace(/<[^>]*>/g, '')
-    .replace(/[\u0000-\u0009\u000B-\u001F\u007F-\u009F​-‏‪-‮⁠-⁤﻿]/g, '')
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -214,8 +218,35 @@ function getSheet_() {
   return sheet;
 }
 
+/**
+ * Last row that really holds an RSVP, judged by column A (Timestamp).
+ * Don't trust getLastRow()/appendRow(): a checkbox, format or validation left
+ * in an empty row makes Sheets treat it as used, and new RSVPs would then be
+ * written far below the visible data.
+ */
+function lastDataRow_(sheet) {
+  var max = sheet.getMaxRows();
+  if (max < 2) return 1;
+  var bottom = sheet.getRange(max, COL.TS);
+  if (bottom.getValue() !== '') return max;
+  return Math.max(1, bottom.getNextDataCell(SpreadsheetApp.Direction.UP).getRow());
+}
+
+function checkboxRule_() {
+  return SpreadsheetApp.newDataValidation().requireCheckbox().build();
+}
+
+/** Write one RSVP into the first free row under the data (a new row every time). */
+function writeRow_(sheet, values) {
+  var row = lastDataRow_(sheet) + 1;
+  if (row > sheet.getMaxRows()) sheet.insertRowsAfter(sheet.getMaxRows(), 100);
+  sheet.getRange(row, 1, 1, values.length).setValues([values]);
+  sheet.getRange(row, COL.SHOW).setDataValidation(checkboxRule_());
+  return row;
+}
+
 function recentRows_(sheet, maxRows) {
-  var last = sheet.getLastRow();
+  var last = lastDataRow_(sheet);
   if (last < 2) return { start: 2, rows: [] };
   var start = Math.max(2, last - maxRows + 1);
   return { start: start, rows: sheet.getRange(start, 1, last - start + 1, HEADERS.length).getValues() };
@@ -303,7 +334,7 @@ function json_(obj) {
 /* ============================================== ONE-TIME SETUP (run me) == */
 
 /**
- * Run once from the Apps Script editor (select `setup` → Run).
+ * Run once from the Apps Script editor (select 'setup' → Run).
  * Creates/formats the RSVP sheet and sets the spreadsheet timezone.
  */
 function setup() {
@@ -323,11 +354,42 @@ function setup() {
   sheet.setColumnWidth(COL.SHOW, 130);
   sheet.getRange(2, COL.TS, sheet.getMaxRows() - 1, 1).setNumberFormat('yyyy-mm-dd hh:mm:ss');
   sheet.getRange(2, COL.MSG, sheet.getMaxRows() - 1, 1).setWrap(true);
-  // Checkbox validation only (no values), so getLastRow()/appendRow keep working.
-  sheet.getRange(2, COL.SHOW, sheet.getMaxRows() - 1, 1)
-    .setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+  // Checkboxes only on rows that hold an RSVP (new rows get theirs when written).
+  // A checkbox column pre-filled down the whole sheet fills empty rows with FALSE,
+  // so clear those leftovers below the data as well.
+  var max = sheet.getMaxRows();
+  var last = lastDataRow_(sheet);
+  sheet.getRange(2, COL.SHOW, max - 1, 1).clearDataValidations();
+  if (last < max) sheet.getRange(last + 1, COL.SHOW, max - last, 1).clearContent();
+  if (last >= 2) sheet.getRange(2, COL.SHOW, last - 1, 1).setDataValidation(checkboxRule_());
   CacheService.getScriptCache().remove(WISHES_CACHE_KEY);
   Logger.log('RSVP sheet ready: ' + ss.getUrl());
+}
+
+/**
+ * Maintenance: run from the editor to delete test rows (Invitation Slug
+ * "selftest" or "qa-test", e.g. rows created by selfTest()). Real RSVPs are
+ * never touched.
+ */
+function removeTestRows() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sheet = getSheet_();
+    var last = lastDataRow_(sheet);
+    var removed = 0;
+    if (last >= 2) {
+      var slugs = sheet.getRange(2, COL.SLUG, last - 1, 1).getValues();
+      for (var i = slugs.length - 1; i >= 0; i--) {
+        var slug = String(slugs[i][0]);
+        if (slug === 'selftest' || slug === 'qa-test') { sheet.deleteRow(i + 2); removed++; }
+      }
+    }
+    CacheService.getScriptCache().remove(WISHES_CACHE_KEY);
+    Logger.log('Removed ' + removed + ' test row(s).');
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /** Optional: run from the editor to check everything works end-to-end. */

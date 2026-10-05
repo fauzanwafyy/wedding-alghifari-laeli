@@ -17,37 +17,58 @@ const CODE = fs.readFileSync(path.join(here, "..", "google-apps-script", "Code.g
 
 function makeSheet(name) {
   const rows = [];
+  // Models real Google Sheets behaviour that matters to Code.gs:
+  //  - applying checkbox validation fills EMPTY cells with FALSE (so the rows
+  //    count as used: getLastRow()/appendRow() land below them);
+  //  - clearing the validation leaves those FALSE values behind.
+  const validated = new Set(); // "row:col"
+  let maxRows = 1000;
+  const cell = (r, c) => (rows[r - 1] || [])[c - 1] ?? "";
+  const put = (r, c, v) => {
+    for (let k = rows.length; k < r; k++) rows[k] = [];
+    rows[r - 1][c - 1] = v;
+  };
   const sheet = {
     name,
     rows,
-    validations: 0,
-    getLastRow: () => rows.length,
-    getMaxRows: () => Math.max(1000, rows.length),
-    appendRow: (values) => { rows.push(values.slice()); return sheet; },
+    validated,
+    getLastRow: () => {
+      for (let i = rows.length; i > 0; i--) if ((rows[i - 1] || []).some((v) => v !== "" && v !== undefined)) return i;
+      return 0;
+    },
+    getMaxRows: () => Math.max(maxRows, rows.length),
+    insertRowsAfter: (after, n) => { maxRows = Math.max(maxRows, rows.length) + n; return sheet; },
+    appendRow: (values) => { const at = sheet.getLastRow() + 1; values.forEach((v, j) => put(at, j + 1, v)); return sheet; },
+    deleteRow: (r) => { rows.splice(r - 1, 1); maxRows--; return sheet; },
     setFrozenRows: () => sheet,
     setColumnWidth: () => sheet,
     getRange: (r, c, nr = 1, nc = 1) => {
+      const each = (fn) => { for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) fn(r + i, c + j); };
       const range = {
+        getRow: () => r,
+        getValue: () => cell(r, c),
         getValues: () => {
           const out = [];
           for (let i = 0; i < nr; i++) {
-            const row = rows[r - 1 + i] || [];
             const vals = [];
-            for (let j = 0; j < nc; j++) vals.push(row[c - 1 + j] ?? "");
+            for (let j = 0; j < nc; j++) vals.push(cell(r + i, c + j));
             out.push(vals);
           }
           return out;
         },
-        setValues: (vals) => {
-          vals.forEach((v, i) => {
-            rows[r - 1 + i] = rows[r - 1 + i] || [];
-            v.forEach((x, j) => (rows[r - 1 + i][c - 1 + j] = x));
-          });
-          return range;
+        setValues: (vals) => { vals.forEach((v, i) => v.forEach((x, j) => put(r + i, c + j, x))); return range; },
+        clearContent: () => { each((a, b) => { if (rows[a - 1]) rows[a - 1][b - 1] = ""; }); return range; },
+        // Like Ctrl+Up: from an empty cell, the nearest non-empty cell above (or row 1).
+        getNextDataCell: () => {
+          let k = r;
+          if (cell(k, c) === "") { while (k > 1 && cell(k, c) === "") k--; }
+          else { while (k > 1 && cell(k - 1, c) !== "") k--; }
+          return sheet.getRange(k, c);
         },
         setFontWeight: () => range, setBackground: () => range, setFontColor: () => range,
         setNumberFormat: () => range, setWrap: () => range,
-        setDataValidation: () => { sheet.validations++; return range; },
+        setDataValidation: () => { each((a, b) => { validated.add(`${a}:${b}`); if (cell(a, b) === "") put(a, b, false); }); return range; },
+        clearDataValidations: () => { each((a, b) => validated.delete(`${a}:${b}`)); return range; },
       };
       return range;
     },
@@ -76,6 +97,7 @@ export function loadGas() {
       getActiveSpreadsheet: () => ss,
       openById: () => ss,
       flush: () => {},
+      Direction: { UP: "UP", DOWN: "DOWN" },
       newDataValidation: () => ({ requireCheckbox() { return this; }, build: () => ({}) }),
     },
     ContentService: {

@@ -126,9 +126,40 @@ test("ping + unknown action + malformed body", () => {
   assert.equal(r.field, "guestName");
 });
 
-test("setup() formats without breaking appendRow", () => {
+test("setup() formats without pushing new RSVPs to the bottom of the sheet", () => {
   const gas = loadGas();
   gas.ctx.setup();
-  post(gas, base());
-  assert.equal(gas.sheets.get("RSVP").rows.length, 2);
+  post(gas, base({ guestName: "Ade" }));
+  post(gas, base({ guestName: "Budi", message: "Barakallah" }));
+  const sheet = gas.sheets.get("RSVP");
+  assert.equal(sheet.rows.length, 3, "rows 2 and 3, directly under the header");
+  assert.equal(sheet.rows[1][2], "Ade");
+  assert.equal(sheet.rows[2][2], "Budi");
+  assert.ok(sheet.validated.has(`2:8`) && sheet.validated.has(`3:8`), "each RSVP row gets its checkbox");
+});
+
+test("a checkbox column pre-filled down the sheet doesn't break row placement", () => {
+  const gas = loadGas();
+  post(gas, base({ guestName: "Ade" }));
+  const sheet = gas.sheets.get("RSVP");
+  sheet.getRange(2, 8, 999, 1).setDataValidation({}); // the old setup() behaviour
+  assert.equal(sheet.getLastRow(), 1000, "FALSE fills the empty checkbox cells");
+  post(gas, base({ guestName: "Budi", message: "Barakallah" }));
+  assert.equal(sheet.rows[2][2], "Budi", "lands in row 3, not row 1001");
+  gas.ctx.setup(); // repairs: checkboxes (and values) only on data rows
+  assert.equal(sheet.getLastRow(), 3);
+  assert.equal(sheet.rows[1][7], true);
+  assert.equal(sheet.rows[2][7], true);
+});
+
+test("removeTestRows() deletes only selftest/qa-test rows", () => {
+  const gas = loadGas();
+  post(gas, base({ guestName: "Tamu Asli", invitationSlug: "pujo-partner" }));
+  post(gas, base({ guestName: "QA", invitationSlug: "qa-test", message: "uji" }));
+  gas.ctx.selfTest();
+  post(gas, base({ guestName: "Tamu Asli Dua", invitationSlug: "umum", message: "Selamat" }));
+  gas.ctx.removeTestRows();
+  const names = gas.sheets.get("RSVP").rows.slice(1).map((r) => r[2]);
+  assert.deepEqual(names, ["Tamu Asli", "Tamu Asli Dua"]);
+  assert.deepEqual(get(gas).wishes.map((w) => w.name), ["Tamu Asli Dua", "Tamu Asli"]);
 });
