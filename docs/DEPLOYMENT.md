@@ -80,8 +80,9 @@ Hard-refresh (or add `?v=2` to the URL) if the browser shows an old version.
 
 ## 7. Pre-launch checklist
 
-- [ ] `rsvp.apiUrl` set in `js/config.js` (see `GOOGLE-SHEETS.md`) and a test RSVP arrives in the sheet
-- [ ] `SITE_URL` replaced in `index.html`
+- [x] `rsvp.apiUrl` set in `js/config.js` and tested live against the sheet (see `GOOGLE-SHEETS.md`)
+- [ ] `SITE_URL` replaced in `index.html` (4 places) once the final address is known
 - [ ] Open a guest link on an iPhone and an Android phone: cover → open → music → RSVP
+- [ ] Submit one real-phone test RSVP with Invitation Slug `qa-test`
+      (e.g. `…/?to=qa-test`), then run `removeTestRows` in Apps Script
 - [ ] Share a link in WhatsApp and check the preview image and title
-- [ ] Delete test rows from the sheet

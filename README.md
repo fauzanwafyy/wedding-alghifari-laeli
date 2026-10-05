@@ -13,8 +13,9 @@ Sheets through a Google Apps Script Web App. No framework, no build step.
 
 | I want to… | Read |
 |---|---|
-| Change names, times, bank details, photos, guests | [`docs/MAINTENANCE.md`](docs/MAINTENANCE.md) |
-| Set up the RSVP Google Sheet + Apps Script | [`docs/GOOGLE-SHEETS.md`](docs/GOOGLE-SHEETS.md) |
+| Change names, times, bank details, guests | [`docs/MAINTENANCE.md`](docs/MAINTENANCE.md) |
+| Replace, add or remove photos | [`docs/PHOTO-REPLACEMENT-GUIDE.md`](docs/PHOTO-REPLACEMENT-GUIDE.md) |
+| RSVP Google Sheet + Apps Script (live; setup, moderation, updates) | [`docs/GOOGLE-SHEETS.md`](docs/GOOGLE-SHEETS.md) |
 | Publish / update GitHub Pages, custom domain | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
 | Generate personal guest links + WhatsApp text | open `generator.html` on the live site |
 
@@ -37,13 +38,14 @@ https://<site>/                         → "Tamu Undangan"
 ├── generator.html             Guest-link & WhatsApp message generator (noindex)
 ├── css/
 │   ├── main.css               Tokens, typography, components (mobile-first)
-│   └── responsive.css         Tablet, desktop split stage, reduced motion
+│   ├── responsive.css         Tablet, desktop split stage, reduced motion
+│   └── fonts-local.css        Embedded fonts, used only when index.html is opened from a folder
 ├── js/
 │   ├── config.js              ★ All editable content + guest list
 │   ├── main.js                Boot: binds config to the page, opening experience, reveal, dock
 │   ├── guest.js               ?to= personalisation (sanitised)
 │   ├── countdown.js           Timezone-safe countdown (WIB)
-│   ├── calendar.js            Google Calendar "Save the Date" URL
+│   ├── calendar.js            Google Calendar "Save the Date" URLs (day + per event)
 │   ├── api.js                 Apps Script client (no-preflight POST, timeouts)
 │   ├── rsvp.js                RSVP form: validation, states, duplicate-safe retries
 │   ├── wishes.js              Public wishes: lazy load, polling, pagination
@@ -57,14 +59,15 @@ https://<site>/                         → "Tamu Undangan"
 │   └── audio/wedding-song.mp3
 ├── google-apps-script/Code.gs RSVP backend (paste into Apps Script)
 ├── tools/optimize-images.py   Regenerate responsive images from a new photo
+├── tools/make-backdrop.py     Regenerate the blurred gallery background
 ├── tests/                     Apps Script emulator, unit tests, Playwright e2e + screenshots
-└── docs/                      Design direction, deployment, Google Sheets, maintenance
+└── docs/                      Design direction, deployment, Google Sheets, maintenance, photo guide
 ```
 
 ## Tech notes
 
-- **Performance:** two font files preloaded (~95 KB), the opening photo preloaded as AVIF
-  (~30–90 KB depending on screen), everything else lazy-loaded. Music (`preload="none"`) is
+- **Performance:** two font files preloaded (~92 KB), the opening photo preloaded as AVIF
+  (~115–215 KB depending on screen density), everything else lazy-loaded. Music (`preload="none"`) is
   only fetched after the guest taps *Buka Undangan*. No third-party scripts, no frameworks.
 - **Accessibility:** semantic landmarks and headings, labelled form controls with inline
   errors, keyboard-operable lightbox (native `<dialog>`), visible focus, AA contrast,

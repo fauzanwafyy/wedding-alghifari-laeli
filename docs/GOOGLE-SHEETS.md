@@ -4,12 +4,29 @@ The website is static (GitHub Pages), so RSVPs are stored in a **Google Sheet** 
 small **Google Apps Script Web App** (`google-apps-script/Code.gs`).
 
 ```
-Guest's browser ──POST /exec──▶ Apps Script (Code.gs) ──appendRow──▶ Google Sheet "RSVP"
+Guest's browser ──POST /exec──▶ Apps Script (Code.gs) ──new row──▶ Google Sheet, tab "RSVP"
                 ◀─GET ?action=wishes── name + message only ◀──────────┘
 ```
 
-Setup takes about 5 minutes and needs your Google account. Nothing secret is ever placed in
-the website: the Web App URL only accepts RSVPs and returns public wishes.
+Nothing secret is ever placed in the website: the Web App URL only accepts RSVPs and
+returns public wishes.
+
+## Current live setup (already done)
+
+| Item | Value |
+|---|---|
+| Google account (owner) | the Google account that ran the setup (not written here, since this repo will be public) |
+| Spreadsheet | **RSVP - Undangan Alghifari & Laeli** (tab **RSVP**; the empty *Sheet1* tab can be ignored or deleted) |
+| Apps Script project | **RSVP Undangan Alghifari & Laeli**, *bound* to that spreadsheet (Ekstensi → Apps Script), `@OnlyCurrentDoc` |
+| Deployment | Web app · **Jalankan sebagai: Saya** · **Yang memiliki akses: Siapa saja** · version 3 |
+| Web App URL | `https://script.google.com/macros/s/AKfycbxAJ-qHfMK--DcGSp1C_9E1wrarz_hrWl2teccNZPfjWnxheVE5KCtGyzRTmHYj-7gm/exec` (already in `js/config.js` → `rsvp.apiUrl`) |
+| Tested live | ping, create, retry → duplicate, identical re-send → duplicate, validation errors, honeypot, formula guard, public wishes (name + message only), real frontend client code. All test rows removed afterwards. |
+
+The sheet itself is private (only the owner can open it). The Web App runs as the owner,
+so guests can submit without access to the sheet.
+
+The sections below describe how to set it up from scratch (for a new sheet or account).
+Google's menus are shown in English with the Indonesian label in brackets.
 
 ---
 
@@ -20,7 +37,8 @@ the website: the Web App URL only accepts RSVPs and returns public wishes.
 
 ## 2. Add the script
 
-1. In the sheet: **Extensions → Apps Script**.
+1. In the sheet: **Extensions → Apps Script** (*Ekstensi → Apps Script*). Open it **from the
+   sheet**, not from script.google.com, so the script is bound to this sheet.
 2. Delete the sample `function myFunction() {}`.
 3. Open `google-apps-script/Code.gs` from this repository, copy **everything**, paste it in.
 4. Click **Save** (💾). Name the project e.g. *RSVP Alghifari & Laeli*.
@@ -54,12 +72,12 @@ external service / run when you're not present* (to serve the Web App).
 
 ## 4. Deploy as a Web App
 
-1. **Deploy → New deployment**.
-2. Click ⚙ next to "Select type" → **Web app**.
+1. **Deploy → New deployment** (*Terapkan → Deployment baru*).
+2. Click ⚙ next to "Select type" → **Web app** (*Aplikasi web*).
 3. Settings:
    - **Description:** `RSVP v1`
-   - **Execute as:** **Me** (your account, so the script can write to your sheet)
-   - **Who has access:** **Anyone** (guests aren't signed in; this is required)
+   - **Execute as:** **Me** (*Saya*): your account, so the script can write to your sheet
+   - **Who has access:** **Anyone** (*Siapa saja*): guests aren't signed in; this is required
 4. **Deploy** → copy the **Web app URL**. It looks like
    `https://script.google.com/macros/s/AKfycb…/exec`
 
@@ -85,7 +103,8 @@ external service / run when you're not present* (to serve the Web App).
    ~30 seconds (they poll while the section is on screen).
 
 You can also run **`selfTest`** in the editor: it writes one test row ("Self Test") and logs
-the responses. Delete that row afterwards.
+the responses. Afterwards run **`removeTestRows`**: it deletes only rows whose Invitation Slug
+is `selftest` or `qa-test`, never real RSVPs.
 
 ---
 
@@ -94,6 +113,7 @@ the responses. Delete that row afterwards.
 Edits to `Code.gs` only go live after a new version is deployed:
 
 **Deploy → Manage deployments → ✏️ (edit) → Version: New version → Deploy.**
+(*Terapkan → Kelola deployment → ✏️ → Versi: Versi baru → Terapkan.*)
 
 Editing the existing deployment this way **keeps the same URL**, so the website needs no change.
 (Creating a *New deployment* instead would produce a new URL that you'd have to paste into
@@ -121,6 +141,7 @@ Untick **Show on Website** (column H) on any row. The wish disappears from the s
 | Concurrency | `LockService` serialises writes, so no rows are lost when many guests submit at once. |
 | Privacy | `?action=wishes` returns only `name` + `message` (+ an opaque id). Attendance, counts, timestamps and slugs never leave the sheet. |
 | Load | Public wishes cached for 20 s, so polling stays cheap. |
+| Row placement | New RSVPs go into the first empty row under the data (judged by column A), not via `appendRow`. Checkboxes are added per row. A checkbox column pre-filled down the sheet fills empty rows with FALSE, which made `appendRow` write at row 1001+. `setup` now clears those leftovers. |
 
 ## Troubleshooting
 
@@ -131,3 +152,5 @@ Untick **Show on Website** (column H) on any row. The wish disappears from the s
 | Error *"Maaf, terjadi kendala pada server"* | Open Apps Script → **Executions** to see the error. Usually the `setup` authorisation wasn't completed. |
 | Changes to Code.gs have no effect | Deploy a **New version** of the existing deployment (see above). |
 | Wishes don't update | Wait ~30 s (cache + polling). Check column H is ticked. |
+| New rows appear far below (row 1000+) | Someone filled column H with checkboxes for the whole sheet. Run **`setup`** once: it removes checkboxes/FALSE from empty rows. Existing rows are kept. |
+| Need to delete test submissions | Use Invitation Slug `qa-test` for tests, then run **`removeTestRows`**. |
