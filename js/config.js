@@ -65,7 +65,7 @@ const WEDDING_CONFIG = {
       displayName: "Moh Agil Alghifari",     // how it is typeset on the page
       nickname: "Alghifari",                 // used in "Alghifari & Laeli"
       initial: "A",
-      childOf: "Putra dari",
+      childOf: "Putra Pertama dari",
       father: { prefix: "Bapak", name: "H. Lukmanudin" },
       mother: { prefix: "Ibu", name: "Atik" },
       instagram: "",                         // e.g. "username" (without @). Empty = hidden.
@@ -80,7 +80,7 @@ const WEDDING_CONFIG = {
       displayName: "Laeli Luspitasari",
       nickname: "Laeli",
       initial: "L",
-      childOf: "Putri dari",
+      childOf: "Putri Ketiga dari",
       father: { prefix: "Bapak", name: "Misbah Hidayat" },
       mother: { prefix: "Ibu", name: "Iin Suryani" },
       instagram: "",

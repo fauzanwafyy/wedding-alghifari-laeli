@@ -27,6 +27,8 @@
     .result__actions .btn { min-height: 44px; padding: 0 1rem; font-size: .6875rem; }
     .hint { font-size: .8125rem; color: var(--c-ink-soft); margin-top: .5rem; }
     .toolbar { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+    .local-note { margin-top: .9rem; padding: .9rem 1rem; border: 1px solid var(--c-hair-strong); background: var(--c-linen); font-size: .875rem; line-height: 1.55; color: var(--c-ink); }
+    .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -42,6 +44,7 @@
         <label class="field__label" for="base">Alamat undangan</label>
         <input class="field__input" id="base" type="url" inputmode="url" autocomplete="off">
         <p class="hint">Terisi otomatis. Ubah jika memakai domain sendiri.</p>
+        <p class="local-note" id="local-note" role="status" hidden><strong>Mode pratinjau lokal.</strong> Tautan di bawah membuka <code>index.html</code> di folder ini, jadi hanya bisa dibuka di komputer ini. Jangan dikirim ke tamu. Setelah undangan online, ganti "Alamat undangan" dengan alamat situsnya, lalu tombol Kirim WhatsApp aktif.</p>
       </div>
       <div class="field">
         <label class="field__label" for="names">Nama tamu (satu per baris)</label>
@@ -108,8 +111,12 @@
     $("#names").value = saved.names || "";
     $("#template").value = saved.template || defaultTemplate;
 
+    const isLocal = (base) => { try { return new URL(base).protocol === "file:"; } catch { return false; } };
     const linkFor = (base, name) => {
       const u = new URL(base);
+      // Opened straight from a folder: a folder address shows a file list (no web
+      // server picks index.html), so point the link at index.html itself.
+      if (u.protocol === "file:" && !/\.html?$/i.test(u.pathname)) u.pathname = u.pathname.replace(/\/?$/, "/") + "index.html";
       u.searchParams.set("to", name);
       return u.toString();
     };
@@ -128,6 +135,8 @@
       try { new URL(base); } catch { valid = false; }
       current = valid ? names.map((name) => ({ name, url: linkFor(base, name) })) : [];
       $("#count").textContent = valid ? `${current.length} tautan` : "Alamat undangan tidak valid";
+      const local = valid && isLocal(base);
+      $("#local-note").hidden = !local;
       $("#results").replaceChildren(...current.map(({ name, url }) => {
         const message = $("#template").value.replaceAll("{nama}", name).replaceAll("{link}", url);
         return h("li", { class: "result" },
@@ -136,7 +145,10 @@
           h("div", { class: "result__actions" },
             h("button", { class: "btn", type: "button", text: "Salin tautan", onclick: () => copy(url, "Tautan disalin") }),
             h("button", { class: "btn", type: "button", text: "Salin pesan", onclick: () => copy(message, "Pesan disalin") }),
-            h("a", { class: "btn btn--solid", href: `https://wa.me/?text=${encodeURIComponent(message)}`, target: "_blank", rel: "noopener noreferrer", text: "Kirim WhatsApp" }),
+            // A file:// link is useless to a guest, so sending is only enabled for an online address.
+            local
+              ? h("a", { class: "btn btn--solid", "aria-disabled": "true", title: "Aktif setelah undangan online", text: "Kirim WhatsApp" })
+              : h("a", { class: "btn btn--solid", href: `https://wa.me/?text=${encodeURIComponent(message)}`, target: "_blank", rel: "noopener noreferrer", text: "Kirim WhatsApp" }),
             h("a", { class: "btn", href: url, target: "_blank", rel: "noopener noreferrer", text: "Pratinjau" })));
       }));
     }
