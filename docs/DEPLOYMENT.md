@@ -31,14 +31,15 @@ git push -u origin main
 
 ## 3. Set the public URL in the page head
 
-Social previews (WhatsApp, Instagram, Facebook) need absolute URLs. In `index.html`, replace
-every `https://SITE_URL/` with your real address, e.g.
+Social previews (WhatsApp, Instagram, Facebook) need absolute URLs. They are already set to
+the live address:
 
 ```
-https://<username>.github.io/alghifari-laeli/
+https://fauzanwafyy.github.io/wedding-alghifari-laeli/
 ```
 
-(4 places: `canonical`, `og:url`, `og:image`, `twitter:image`.) Commit and push.
+(`index.html`: `canonical`, `og:url`, `og:image`, `twitter:image`; `js/config.js`: `site.url`.)
+If the address ever changes (custom domain, renamed repo), update those 5 places.
 
 To refresh a preview WhatsApp has already cached, share the link with a harmless extra
 parameter (e.g. `?to=Nama&v=2`). Facebook's
@@ -81,7 +82,7 @@ Hard-refresh (or add `?v=2` to the URL) if the browser shows an old version.
 ## 7. Pre-launch checklist
 
 - [x] `rsvp.apiUrl` set in `js/config.js` and tested live against the sheet (see `GOOGLE-SHEETS.md`)
-- [ ] `SITE_URL` replaced in `index.html` (4 places) once the final address is known
+- [x] Live address set in `index.html` (4 places) and `site.url`
 - [ ] Open a guest link on an iPhone and an Android phone: cover → open → music → RSVP
 - [ ] Submit one real-phone test RSVP with Invitation Slug `qa-test`
       (e.g. `…/?to=qa-test`), then run `removeTestRows` in Apps Script

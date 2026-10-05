@@ -24,7 +24,7 @@ const WEDDING_CONFIG = {
   site: {
     // Public URL of the invitation (used in the calendar description and the
     // guest-link generator). Leave "" to auto-detect from the browser address.
-    url: "",
+    url: "https://fauzanwafyy.github.io/wedding-alghifari-laeli/",
     locale: "id-ID",
   },
 
