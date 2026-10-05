@@ -11,7 +11,8 @@ or the page speed. Everything below uses the **real file names in this project**
 
 ## 1. Where every photo is used (current mapping)
 
-All photo settings live in **`js/config.js`**. The HTML never hard-codes a photo.
+All photo settings live in **`js/config.js`**. Apart from the share preview image
+in the `<head>` of `index.html` (last row), the HTML never hard-codes a photo.
 
 | Place on the page | Config key (`js/config.js`) | File base in the repo | Original source file | Widths | Shape |
 |---|---|---|---|---|---|
@@ -51,8 +52,9 @@ only the optimized web versions are. Keep the originals in Google Drive.
 - **Faces.** Keep faces away from the extreme top and bottom 15% of the frame.
   On phones the cover and hero are cropped to the screen shape.
 - **Cover photo specifically.** The names and the "Buka Undangan" button sit on
-  the **lower third** of the cover on phones. Choose a photo whose faces are in
-  the **upper half**, otherwise the text covers them.
+  the **lower third** of the cover on phones. Choose a photo whose faces are
+  **at or above the middle** (the current awl-cover-3 has them just above the
+  middle), otherwise the text covers them.
 - **Colour & mood.** Warm, natural tones match the ivory/earth palette. Very
   saturated or cool/blue photos will look out of place.
 - **File type.** JPG or PNG straight from the photographer is fine. HEIC from an
