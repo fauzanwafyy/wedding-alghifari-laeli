@@ -145,7 +145,7 @@
     $("#copy-all").addEventListener("click", () => copy(current.map((r) => `${r.name}\t${r.url}`).join("\n"), "Semua tautan disalin"));
     $("#download").addEventListener("click", () => {
       const csv = "Nama,Tautan\n" + current.map((r) => `"${r.name.replace(/"/g, '""')}","${r.url}"`).join("\n");
-      const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })), download: "tautan-undangan.csv" });
+      const a = h("a", { href: URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv" })), download: "tautan-undangan.csv" });
       document.body.append(a); a.click(); a.remove();
     });
     render();
