@@ -24,7 +24,7 @@ const WEDDING_CONFIG = {
   site: {
     // Public URL of the invitation (used in the calendar description and the
     // guest-link generator). Leave "" to auto-detect from the browser address.
-    url: "https://fauzanwafyy.github.io/wedding-alghifari-laeli/",
+    url: "",
     locale: "id-ID",
   },
 
@@ -100,7 +100,7 @@ const WEDDING_CONFIG = {
     timezone: "Asia/Jakarta",
     timezoneLabel: "WIB",
     // The countdown counts down to this moment (first event start).
-    countdownTarget: "2026-10-21T08:30:00+07:00",
+    countdownTarget: "2026-10-21T09:00:00+07:00",
     // After the countdown reaches zero the page shows the "today" message
     // until this moment, then the "after" message.
     celebrationEnds: "2026-10-22T00:00:00+07:00",
@@ -126,7 +126,7 @@ const WEDDING_CONFIG = {
     {
       title: "Akad Nikah",
       date: "2026-10-21",
-      startTime: "08:30",
+      startTime: "09:00",
       endTime: null,
       endText: "",
       timezone: "Asia/Jakarta",
