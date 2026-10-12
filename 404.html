@@ -12,7 +12,7 @@
     // without any server. Only one path segment after the site root is accepted.
     (function () {
       var parts = location.pathname.split("/").filter(Boolean);
-      var onProjectSite = /\.github\.io$/i.test(location.hostname);
+      var onProjectSite = /\.github\.io$|^onepercent\.my\.id$/i.test(location.hostname); // repo name is the first path segment
       var root = onProjectSite && parts.length ? "/" + parts[0] + "/" : "/";
       var rest = onProjectSite ? parts.slice(1) : parts;
       if (rest.length === 1 && /^[a-z0-9][a-z0-9-]{1,79}$/i.test(rest[0]) && !/\./.test(rest[0])) {
